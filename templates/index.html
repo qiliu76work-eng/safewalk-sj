@@ -16,6 +16,8 @@
     .error { color: #b00020; }
     .legend span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     .legend div { font-size: 13px; margin: 3px 0; }
+    .legend span.sq { border-radius: 2px; opacity: 0.6; }
+    .zones-legend p { font-size: 13px; margin: 8px 0 4px; }
   </style>
 </head>
 <body>
@@ -29,6 +31,14 @@
     <div id="status"></div>
     <h3>Legend</h3>
     <div class="legend" id="legend"></div>
+    <h3>Safety zones</h3>
+    <label><input type="checkbox" id="zonesToggle" checked> Show safety zones</label>
+    <div class="legend zones-legend">
+      <p>Reported incidents nearby. Green = no recent reports, not a guarantee of safety.</p>
+      <div><span class="sq" style="background:#2ecc71"></span>0 reports</div>
+      <div><span class="sq" style="background:#f1c40f"></span>1–2 reports</div>
+      <div><span class="sq" style="background:#e74c3c"></span>3+ reports</div>
+    </div>
   </div>
   <div id="map"></div>
 
@@ -40,6 +50,60 @@
       maxZoom: 19, attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
     const pins = L.layerGroup().addTo(map);
+
+    // ---------- Safety zones ----------
+    // Grid of ~150 m squares over downtown San Jose / SJSU. The grid is anchored
+    // to a fixed corner so squares stay in the same place as incidents are added.
+    const CELL_LAT = 0.0014, CELL_LNG = 0.0017;
+    const GRID = { south: 37.3180, west: -121.9100, north: 37.3520, east: -121.8700 };
+    const ZONE_COLORS = { none: "#2ecc71", some: "#f1c40f", many: "#e74c3c" };
+
+    // Separate pane under the pins so zones never block clicking a pin
+    map.createPane("zones");
+    map.getPane("zones").style.zIndex = 350;
+    const zones = L.layerGroup().addTo(map);
+    const incidents = [];  // every incident currently on the map
+
+    function cellOf(lat, lng) {
+      if (lat < GRID.south || lat >= GRID.north || lng < GRID.west || lng >= GRID.east) return null;
+      return [Math.floor((lat - GRID.south) / CELL_LAT), Math.floor((lng - GRID.west) / CELL_LNG)];
+    }
+
+    function recomputeZones() {
+      zones.clearLayers();
+      const counts = new Map();  // "row,col" -> number of incidents
+      for (const inc of incidents) {
+        const cell = cellOf(inc.lat, inc.lng);
+        if (!cell) continue;  // outside the downtown grid
+        const key = cell.join(",");
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+      // Draw squares with incidents, plus green squares only in the ring around them
+      const toDraw = new Set();
+      for (const key of counts.keys()) {
+        const [r, c] = key.split(",").map(Number);
+        for (let dr = -1; dr <= 1; dr++)
+          for (let dc = -1; dc <= 1; dc++) {
+            const rr = r + dr, cc = c + dc;
+            const s = GRID.south + rr * CELL_LAT, w = GRID.west + cc * CELL_LNG;
+            if (s >= GRID.south && s < GRID.north && w >= GRID.west && w < GRID.east) toDraw.add(`${rr},${cc}`);
+          }
+      }
+      for (const key of toDraw) {
+        const [r, c] = key.split(",").map(Number);
+        const n = counts.get(key) || 0;
+        const color = n === 0 ? ZONE_COLORS.none : n <= 2 ? ZONE_COLORS.some : ZONE_COLORS.many;
+        const s = GRID.south + r * CELL_LAT, w = GRID.west + c * CELL_LNG;
+        L.rectangle([[s, w], [s + CELL_LAT, w + CELL_LNG]], {
+          pane: "zones", interactive: false,
+          color, weight: 1, opacity: 0.4, fillColor: color, fillOpacity: 0.25
+        }).addTo(zones);
+      }
+    }
+
+    document.getElementById("zonesToggle").onchange = (e) => {
+      if (e.target.checked) zones.addTo(map); else zones.remove();
+    };
 
     document.getElementById("legend").innerHTML = Object.entries(COLORS)
       .map(([cat, color]) => `<div><span style="background:${color}"></span>${cat}</div>`).join("");
@@ -83,6 +147,8 @@
         const data = await res.json();
         if (!res.ok) return setStatus(data.error || "Something went wrong.", true);
         data.incidents.forEach(addPin);
+        incidents.push(...data.incidents);
+        recomputeZones();
         setStatus(`Found ${data.incidents.length} incident(s).`);
       } catch (e) {
         setStatus("Could not reach the server. Is app.py running?", true);
@@ -100,7 +166,12 @@
       setStatus(`Loaded ${samples.length} sample articles. Click "Extract incidents".`);
     };
 
-    document.getElementById("clear").onclick = () => { pins.clearLayers(); setStatus(""); };
+    document.getElementById("clear").onclick = () => {
+      pins.clearLayers();
+      incidents.length = 0;
+      recomputeZones();
+      setStatus("");
+    };
   </script>
 </body>
 </html>
