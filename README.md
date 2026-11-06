@@ -1,12 +1,11 @@
 # SafeWalk
 
-SafeWalk plans safer walking routes for women, steering around safety zones built from real city police data and local news that Claude reads, then explains the route in plain language.
-
+SafeWalk plans safer walking routes for women, steering around safety zones built from real city police data and local news that Claude reads, then suggest a safer route for us!
 **Demo video:** https://youtu.be/Pm12J6SZUxg
 
 ## The problem
 
-SJSU students often walk through downtown San José at night, from the library to light rail, Diridon Station or a late dinner. The information that could help them is scattered across news sites, police data portals and word of mouth. And crime maps show dots, not answers: they don't tell you which way to walk home right now.
+SJSU students often walk through downtown San José at night, from the library to the light rail station. The information that could help them is scattered across news sites, police data portals and word of mouth. And crime maps show dots, not answers: they don't tell you which way to walk home right now.
 
 ## What it does
 
@@ -38,7 +37,7 @@ The app uses the Claude API (`claude-sonnet-5-5`) for two jobs:
 
 ## Responsible design
 
-- **Green means "no recent reports", not "safe".** The legend says so: *"Green = no recent reports, not a guarantee of safety."*
+- **Green means "no recent reports", not "safe".** The legend says so: *"Green = no recent reports"*
 - **Small squares, not neighborhood labels.** Zones are about 150 m wide and count reports. The app never labels a neighborhood as dangerous, and Claude is told not to.
 - **No names are stored.** The extraction tool has no field for names, and Claude is told to leave them out.
 - **Honest when there's no better option.** If no safer route exists (no red zones nearby, the detour fails, or both routes come out the same), the app shows one route and says why.
