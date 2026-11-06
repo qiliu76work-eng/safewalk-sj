@@ -180,10 +180,50 @@ ORS_URL = "https://api.openrouteservice.org/v2/directions/foot-walking/geojson"
 NEAR_ROUTE_METERS = 100
 
 ADVISOR_PROMPT = """You are a calm, practical walking-safety advisor for SJSU students.
-In 3 to 5 sentences, compare the two routes, mention the specific incidents that made the difference,
-and suggest one practical tip (for example: stick to busier streets, walk with a friend, or use the
-campus escort service). Never exaggerate risk and never label whole neighborhoods as dangerous.
-Write plain sentences with no headings, bullet points or markdown."""
+A student is glancing at a phone, so keep it short and scannable.
+Always respond by calling the give_walk_advice tool exactly once.
+
+- verdict: "green" = take the safer route; "yellow" = either route is fine, just stay aware;
+  "red" = consider another option (a ride, waiting for a friend, a different time).
+  Use "red" only when several recent incidents sit right on the only practical route at a similar time of day.
+  If there is only one route, choose "yellow" or "red".
+- headline: at most 8 words, e.g. "Take the green route" or "Either route works tonight".
+- reasons: at most 3 bullets, at most 12 words each, only about specific incidents on or near the routes
+  (what happened, where, and roughly when). Use an empty list if there are none.
+- tip: one practical sentence (for example: stick to busier, well-lit streets, walk with a friend,
+  or use the SJSU campus escort service).
+- details: 3 to 5 plain sentences comparing the routes and naming the incidents that made the difference.
+
+Tone: calm and confident, never alarming. Never exaggerate risk and never label whole neighborhoods
+as dangerous. Plain text only, no markdown."""
+
+WALK_ADVICE_TOOL = {
+    "name": "give_walk_advice",
+    "description": "Give the student short, scannable walking-safety advice for the planned walk.",
+    "strict": True,
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["verdict", "headline", "reasons", "tip", "details"],
+        "properties": {
+            "verdict": {"type": "string", "enum": ["green", "yellow", "red"]},
+            "headline": {"type": "string", "description": "At most 8 words."},
+            "reasons": {
+                "type": "array",
+                "description": "At most 3 bullets, at most 12 words each, about incidents on or near the routes.",
+                "items": {"type": "string"},
+            },
+            "tip": {"type": "string", "description": "One practical sentence."},
+            "details": {"type": "string", "description": "3 to 5 plain sentences."},
+        },
+    },
+}
+
+
+def fallback_advice(details):
+    """Used when Claude can't give structured advice, so the page always gets the same shape."""
+    return {"verdict": "yellow", "headline": "Compare the routes on the map",
+            "reasons": [], "tip": "Stick to busier, well-lit streets and stay aware.", "details": details}
 
 
 def get_ors_route(start, end, avoid_polygons=None):
@@ -297,13 +337,22 @@ def ask_advisor(normal, safer, time_of_day, note):
         model=MODEL,
         max_tokens=16000,
         system=ADVISOR_PROMPT,
+        tools=[WALK_ADVICE_TOOL],
+        tool_choice={"type": "auto"},  # Sonnet 5.5 can't force a tool; the prompt asks for it instead
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         messages=[{"role": "user", "content": "Here are the route facts:\n" + json.dumps(facts, indent=2)}],
     )
     if response.stop_reason == "refusal":
-        return "The advisor couldn't give advice for this walk. Please compare the routes on the map."
-    return "".join(b.text for b in response.content if b.type == "text").strip()
+        return fallback_advice("The advisor couldn't give advice for this walk. Please compare the routes on the map.")
+    for block in response.content:
+        if block.type == "tool_use" and block.name == "give_walk_advice":
+            advice = dict(block.input)
+            advice["reasons"] = advice["reasons"][:3]  # the schema can't cap the list, so trim here
+            return advice
+    # Claude answered in plain text instead of the tool: still show it
+    text = "".join(b.text for b in response.content if b.type == "text").strip()
+    return fallback_advice(text or "The advisor didn't return advice. Please compare the routes on the map.")
 
 
 @app.route("/api/route", methods=["POST"])
@@ -346,7 +395,7 @@ def api_route():
     try:
         advice = ask_advisor(normal, safer, data.get("time_of_day", "unknown"), note)
     except anthropic.APIError:
-        advice = "The safety advisor is unavailable right now (Claude API error). The routes are still shown."
+        advice = fallback_advice("The safety advisor is unavailable right now (Claude API error). The routes are still shown.")
 
     return jsonify(normal=normal, safer=safer, note=note, advice=advice)
 

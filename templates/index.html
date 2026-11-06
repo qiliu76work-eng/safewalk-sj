@@ -32,7 +32,7 @@
       position: fixed; top: 64px; right: 10px; z-index: 1000; width: min(300px, calc(100% - 20px));
       background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 4px 16px rgba(0,0,0,.25);
     }
-    .leaflet-top.leaflet-left { top: 96px; }  /* keep zoom buttons below the brand box */
+    .leaflet-top.leaflet-left { top: 84px; }  /* keep zoom buttons below the brand box */
 
     /* Bottom sheet */
     #sheet {
@@ -105,8 +105,35 @@
     #routeInfo { font-size: 15px; margin-top: 10px; }
     #routeInfo div { margin: 4px 0; display: flex; align-items: center; }
     #routeInfo .line { width: 22px; height: 5px; border-radius: 3px; margin-right: 8px; flex: none; }
-    .advice { margin-top: 10px; padding: 12px; background: #eef7f0; border-left: 4px solid var(--safe); border-radius: 6px; font-size: 15px; line-height: 1.5; }
-    .advice-title { font-size: 13px; font-weight: 600; color: var(--safe); margin-bottom: 4px; }
+    /* Advice card */
+    .advice-card {
+      margin-top: 12px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08); font-size: 15px; line-height: 1.45;
+      scroll-margin-top: 8px;
+    }
+    .advice-card[hidden] { display: none; }
+    .card-top { padding: 14px; background: var(--v-bg); border-bottom: 1px solid var(--border); }
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;
+      letter-spacing: .4px; text-transform: uppercase; background: var(--v-badge); color: var(--v-badge-text);
+    }
+    .headline { font-size: 21px; font-weight: 700; color: var(--text); margin: 8px 0 6px; line-height: 1.25; }
+    .times { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 15px; color: var(--text); }
+    .times > span { display: inline-flex; align-items: center; font-weight: 600; }
+    .times .line { width: 20px; height: 5px; border-radius: 3px; margin-right: 6px; }
+    .reasons { margin: 0; padding: 12px 14px 4px 32px; }
+    .reasons li { margin-bottom: 6px; }
+    .tip { margin: 8px 14px 12px; padding: 10px 12px; background: #eaf3fb; border-radius: 10px; color: #1b4f72; }
+    .advice-card details { border-top: 1px solid var(--border); }
+    .advice-card summary {
+      padding: 14px; min-height: 48px; cursor: pointer; color: var(--accent); font-weight: 600; font-size: 15px;
+      list-style-position: inside;
+    }
+    .advice-card details p { margin: 0; padding: 0 14px 14px; color: var(--text); }
+    /* Verdict colors: soft backgrounds so it stays calm, not alarming */
+    .v-green  { --v-bg: #eaf7ef; --v-badge: #27ae60; --v-badge-text: #fff; }
+    .v-yellow { --v-bg: #fdf8e6; --v-badge: #f1c40f; --v-badge-text: #4a3b00; }
+    .v-red    { --v-bg: #fcefee; --v-badge: #d9534f; --v-badge-text: #fff; }
     .disclaimer { text-align: center; margin: 12px 0 0; }
   </style>
 </head>
@@ -117,7 +144,6 @@
     <div class="brand">
       <h1>SafeWalk SJ</h1>
       <p>We read the news so you can walk home informed</p>
-      <a href="/feed">Behind the scenes →</a>
     </div>
     <button class="legend-btn" id="legendBtn">Legend</button>
   </div>
@@ -184,7 +210,7 @@
     <button id="planBtn" disabled>Plan my walk</button>
     <div id="walkStatus" class="status"></div>
     <div id="routeInfo"></div>
-    <div id="advice" class="advice" hidden></div>
+    <div id="advice" class="advice-card" hidden></div>
 
     <p class="disclaimer">Locations are approximate. All sample data is synthetic.</p>
   </div>
@@ -416,6 +442,36 @@
       return `${leaveNow ? "leaving now: " : ""}${part} (${label})`;
     }
 
+    // ----- Advice card -----
+    const VERDICTS = {
+      green:  { label: "Safer route", cls: "v-green" },
+      yellow: { label: "Stay aware",  cls: "v-yellow" },
+      red:    { label: "Consider another option", cls: "v-red" },
+    };
+
+    function renderAdvice(data) {
+      const a = data.advice;
+      const v = VERDICTS[a.verdict] || VERDICTS.yellow;
+      const times = `
+        <div class="times">
+          <span><span class="line" style="background:${ROUTE_COLORS.normal}"></span>Normal ${data.normal.minutes} min</span>
+          ${data.safer ? `<span><span class="line" style="background:${ROUTE_COLORS.safer}"></span>Safer ${data.safer.minutes} min</span>` : ""}
+        </div>`;
+      const reasons = a.reasons.length
+        ? `<ul class="reasons">${a.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>` : "";
+      adviceBox.className = "advice-card " + v.cls;
+      adviceBox.innerHTML = `
+        <div class="card-top">
+          <span class="badge">${v.label}</span>
+          <div class="headline">${esc(a.headline)}</div>
+          ${times}
+        </div>
+        ${reasons}
+        ${a.tip ? `<div class="tip"><b>Tip:</b> ${esc(a.tip)}</div>` : ""}
+        ${a.details ? `<details><summary>See the incidents behind this</summary><p>${esc(a.details)}</p></details>` : ""}`;
+      adviceBox.hidden = false;
+    }
+
     // ----- Plan my walk -----
     planBtn.onclick = async () => {
       if (!start || !dest) return;
@@ -435,21 +491,17 @@
         if (!res.ok) return showStatus(walkStatus, data.error || "Something went wrong.", { isError: true });
 
         const normalLine = L.polyline(data.normal.coords, { color: ROUTE_COLORS.normal, weight: 7, opacity: 0.8 }).addTo(routeLayer);
-        let html = `<div><span class="line" style="background:${ROUTE_COLORS.normal}"></span>Normal route: <b>&nbsp;${data.normal.minutes} min</b></div>`;
         let bounds = normalLine.getBounds();
         if (data.safer) {
           const saferLine = L.polyline(data.safer.coords, { color: ROUTE_COLORS.safer, weight: 6, opacity: 0.9 }).addTo(routeLayer);
           bounds = bounds.extend(saferLine.getBounds());
-          html += `<div><span class="line" style="background:${ROUTE_COLORS.safer}"></span>Safer route: <b>&nbsp;${data.safer.minutes} min</b></div>`;
-        } else {
-          html += `<div><i>Showing one route only. ${esc(data.note)}</i></div>`;
         }
-        routeInfo.innerHTML = html;
+        routeInfo.innerHTML = data.safer ? "" : `<div><i>Showing one route only. ${esc(data.note)}</i></div>`;
+        showStatus(walkStatus, "");
+        renderAdvice(data);
         // Keep the routes visible above the bottom sheet
         map.fitBounds(bounds, { paddingTopLeft: [30, 110], paddingBottomRight: [30, sheet.offsetHeight + 20] });
-        showStatus(walkStatus, "");
-        adviceBox.innerHTML = '<div class="advice-title">Safety advisor</div>' + esc(data.advice);
-        adviceBox.hidden = false;
+        adviceBox.scrollIntoView({ behavior: "smooth", block: "start" });
       } catch (err) {
         showStatus(walkStatus, "Could not reach the server. Is app.py running?", { isError: true });
       } finally {
