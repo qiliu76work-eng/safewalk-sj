@@ -2,57 +2,151 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SafeWalk SJ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; display: flex; height: 100vh; }
-    #panel { width: 360px; padding: 16px; box-sizing: border-box; overflow-y: auto; border-right: 1px solid #ddd; }
+    :root {
+      --navy: #1f3a5f; --accent: #2471a3; --text: #2c3e50; --muted: #6b7785;
+      --border: #e3e7ec; --bg: #f5f7fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; color: var(--text);
+      display: flex; flex-direction: column; height: 100vh; background: var(--bg);
+    }
+
+    /* Header */
+    header {
+      background: var(--navy); color: #fff; padding: 14px 24px;
+      display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,.15); z-index: 1000;
+    }
+    header h1 { margin: 0; font-size: 24px; letter-spacing: .3px; }
+    header p { margin: 0; font-size: 15px; opacity: .85; font-style: italic; }
+
+    /* Layout */
+    main { flex: 1; display: flex; min-height: 0; }
+    #panel { width: 380px; overflow-y: auto; padding: 14px; background: var(--bg); border-right: 1px solid var(--border); }
     #map { flex: 1; }
-    h1 { margin: 0 0 8px; font-size: 22px; }
-    textarea { width: 100%; height: 280px; box-sizing: border-box; font: inherit; font-size: 13px; }
-    button { padding: 8px 12px; margin: 6px 6px 0 0; cursor: pointer; }
-    #status { margin-top: 10px; font-size: 14px; }
+
+    /* Panel sections */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 4px; font-size: 16px; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+    .card h2 .num {
+      background: var(--navy); color: #fff; width: 22px; height: 22px; border-radius: 50%;
+      font-size: 12px; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .hint { margin: 0 0 10px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+    textarea {
+      width: 100%; height: 150px; font: inherit; font-size: 13px; padding: 8px;
+      border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+    }
+    .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+    button {
+      padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: #fff;
+      color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+    }
+    button:hover { background: #f0f3f6; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover { background: #1b5a85; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #walkBtn.active { background: #27ae60; border-color: #27ae60; color: #fff; }
+    label { font-size: 14px; }
+    input[type="time"] { font: inherit; font-size: 14px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; }
+
+    .status { font-size: 14px; margin-top: 8px; min-height: 0; }
+    .status:empty { display: none; }
     .error { color: #b00020; }
-    .legend span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-    .legend div { font-size: 13px; margin: 3px 0; }
-    .legend span.sq { border-radius: 2px; opacity: 0.6; }
-    .zones-legend p { font-size: 13px; margin: 8px 0 4px; }
-    .walk-status, #routeInfo { font-size: 14px; margin-top: 8px; }
-    #routeInfo .line { display: inline-block; width: 18px; height: 4px; vertical-align: middle; margin-right: 6px; }
-    .advice { margin-top: 10px; padding: 10px; background: #eef7f0; border-left: 4px solid #27ae60; font-size: 14px; line-height: 1.4; }
-    #walkBtn.active { background: #27ae60; color: #fff; }
+    #routeInfo { font-size: 14px; margin-top: 8px; }
+    #routeInfo div { margin: 3px 0; }
+    .advice { margin-top: 10px; padding: 10px 12px; background: #eef7f0; border-left: 4px solid #27ae60; border-radius: 4px; font-size: 14px; line-height: 1.45; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
+      border: 2px solid #cfd8e3; border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Combined legend */
+    .legend h3 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+    .legend h3:first-of-type { margin-top: 4px; }
+    .legend .items { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
+    .legend .item { font-size: 13px; display: flex; align-items: center; }
+    .legend .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; border: 2px solid #fff; box-shadow: 0 0 0 1px #ccc; }
+    .legend .sq { width: 14px; height: 14px; border-radius: 2px; margin-right: 6px; opacity: .6; }
+    .legend .line { width: 22px; height: 5px; border-radius: 3px; margin-right: 6px; }
+    .legend .note { font-size: 12px; color: var(--muted); margin: 6px 0; line-height: 1.4; }
+
+    .disclaimer { font-size: 12px; color: var(--muted); text-align: center; margin: 4px 0 8px; }
   </style>
 </head>
 <body>
-  <div id="panel">
+  <header>
     <h1>SafeWalk SJ</h1>
-    <p>Paste a news article, then click <b>Extract incidents</b>.</p>
-    <textarea id="article" placeholder="Paste article text here..."></textarea>
-    <button id="submit">Extract incidents</button>
-    <button id="samples">Load samples</button>
-    <button id="clear">Clear map</button>
-    <div id="status"></div>
-    <h3>Plan my walk</h3>
-    <label>When are you walking? <input type="time" id="walkTime" value="22:00"></label><br>
-    <button id="walkBtn">Plan my walk</button>
-    <button id="walkClear">Clear route</button>
-    <div id="walkStatus" class="walk-status"></div>
-    <div id="routeInfo"></div>
-    <div id="advice" class="advice" hidden></div>
+    <p>We read the news so you can walk home informed</p>
+  </header>
 
-    <h3>Legend</h3>
-    <div class="legend" id="legend"></div>
-    <h3>Safety zones</h3>
-    <label><input type="checkbox" id="zonesToggle" checked> Show safety zones</label>
-    <div class="legend zones-legend">
-      <p>Reported incidents nearby. Green = no recent reports, not a guarantee of safety.</p>
-      <div><span class="sq" style="background:#2ecc71"></span>0 reports</div>
-      <div><span class="sq" style="background:#f1c40f"></span>1–2 reports</div>
-      <div><span class="sq" style="background:#e74c3c"></span>3+ reports</div>
+  <main>
+    <div id="panel">
+      <section class="card">
+        <h2><span class="num">1</span>Add an article</h2>
+        <p class="hint">Paste a local news article. Claude finds the safety incidents and pins them on the map.</p>
+        <textarea id="article" placeholder="Paste article text here..."></textarea>
+        <div class="row">
+          <button id="submit" class="primary">Extract incidents</button>
+          <button id="clear">Clear map</button>
+        </div>
+        <div id="status" class="status"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">2</span>Load samples</h2>
+        <p class="hint">No article handy? Fill the box above with synthetic downtown San Jose news briefs, then click <b>Extract incidents</b>.</p>
+        <button id="samples">Load samples</button>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">3</span>Plan my walk</h2>
+        <p class="hint">Click <b>Plan my walk</b>, then click a start point and an end point on the map.</p>
+        <label>When are you walking? <input type="time" id="walkTime" value="22:00"></label>
+        <div class="row">
+          <button id="walkBtn" class="primary">Plan my walk</button>
+          <button id="walkClear">Clear route</button>
+        </div>
+        <div id="walkStatus" class="status"></div>
+        <div id="routeInfo"></div>
+        <div id="advice" class="advice" hidden></div>
+      </section>
+
+      <section class="card legend">
+        <h2>Map legend</h2>
+        <h3>Incident pins</h3>
+        <div class="items" id="legend"></div>
+
+        <h3>Safety zones</h3>
+        <label><input type="checkbox" id="zonesToggle" checked> Show safety zones</label>
+        <p class="note">Reported incidents nearby. Green = no recent reports, not a guarantee of safety.</p>
+        <div class="items">
+          <div class="item"><span class="sq" style="background:#2ecc71"></span>0 reports</div>
+          <div class="item"><span class="sq" style="background:#f1c40f"></span>1–2 reports</div>
+          <div class="item"><span class="sq" style="background:#e74c3c"></span>3+ reports</div>
+        </div>
+
+        <h3>Routes</h3>
+        <div class="items">
+          <div class="item"><span class="line" style="background:#7f8c8d"></span>Normal route</div>
+          <div class="item"><span class="line" style="background:#27ae60"></span>Safer route</div>
+        </div>
+      </section>
+
+      <p class="disclaimer">Locations are approximate. All sample data is synthetic.</p>
     </div>
-  </div>
-  <div id="map"></div>
+    <div id="map"></div>
+  </main>
 
   <script>
     // Pin colors avoid red/yellow/green, which are reserved for safety-zone levels
@@ -126,7 +220,7 @@
     };
 
     document.getElementById("legend").innerHTML = Object.entries(COLORS)
-      .map(([cat, color]) => `<div><span style="background:${color}"></span>${cat}</div>`).join("");
+      .map(([cat, color]) => `<div class="item"><span class="dot" style="background:${color}"></span>${cat}</div>`).join("");
 
     // Escape text so article content can't inject HTML into popups
     function esc(s) {
@@ -135,10 +229,14 @@
       return d.innerHTML;
     }
 
-    function setStatus(msg, isError = false) {
-      const el = document.getElementById("status");
-      el.textContent = msg;
-      el.className = isError ? "error" : "";
+    // Shows a status message; loading=true adds a spinning circle in front
+    function showStatus(el, msg, { isError = false, loading = false } = {}) {
+      el.innerHTML = msg ? (loading ? '<span class="spinner"></span>' : "") + esc(msg) : "";
+      el.className = "status" + (isError ? " error" : "");
+    }
+
+    function setStatus(msg, isError = false, loading = false) {
+      showStatus(document.getElementById("status"), msg, { isError, loading });
     }
 
     function addPin(inc) {
@@ -157,7 +255,7 @@
       if (!text) return setStatus("Please paste an article first.", true);
       const btn = document.getElementById("submit");
       btn.disabled = true;
-      setStatus("Asking Claude... (this can take a little while)");
+      setStatus("Claude is reading the article... (this can take a little while)", false, true);
       try {
         const res = await fetch("/api/extract", {
           method: "POST",
@@ -199,7 +297,7 @@
       startPt = endPt = null;
       routeInfo.innerHTML = "";
       adviceBox.hidden = true;
-      walkStatus.textContent = "";
+      showStatus(walkStatus, "");
     }
 
     // Reads the "When are you walking?" picker, e.g. "22:00" -> "night (10:00 PM)"
@@ -214,7 +312,7 @@
       clearRoute();
       walkMode = true;
       walkBtn.classList.add("active");
-      walkStatus.textContent = "Click your START point on the map.";
+      showStatus(walkStatus, "Click your START point on the map.");
     };
     document.getElementById("walkClear").onclick = () => {
       clearRoute();
@@ -228,14 +326,14 @@
       if (!startPt) {
         startPt = pt;
         L.marker(pt).bindTooltip("Start", { permanent: true }).addTo(routeLayer);
-        walkStatus.textContent = "Now click your END point.";
+        showStatus(walkStatus, "Now click your END point.");
         return;
       }
       endPt = pt;
       L.marker(pt).bindTooltip("End", { permanent: true }).addTo(routeLayer);
       walkMode = false;
       walkBtn.classList.remove("active");
-      walkStatus.textContent = "Finding routes and asking the safety advisor...";
+      showStatus(walkStatus, "Finding routes and asking the safety advisor...", { loading: true });
 
       try {
         const res = await fetch("/api/route", {
@@ -247,25 +345,25 @@
           })
         });
         const data = await res.json();
-        if (!res.ok) { walkStatus.textContent = ""; routeInfo.innerHTML = `<span class="error">${esc(data.error)}</span>`; return; }
+        if (!res.ok) { showStatus(walkStatus, ""); routeInfo.innerHTML = `<span class="error">${esc(data.error)}</span>`; return; }
 
         const normalLine = L.polyline(data.normal.coords, { color: "#7f8c8d", weight: 6, opacity: 0.8 }).addTo(routeLayer);
-        let html = `<div><span class="line" style="background:#7f8c8d"></span>Normal route: <b>${data.normal.minutes} min</b></div>`;
+        let html = `<div>Normal route (gray): <b>${data.normal.minutes} min</b></div>`;
         let bounds = normalLine.getBounds();
         if (data.safer) {
           const saferLine = L.polyline(data.safer.coords, { color: "#27ae60", weight: 5, opacity: 0.9 }).addTo(routeLayer);
           bounds = bounds.extend(saferLine.getBounds());
-          html += `<div><span class="line" style="background:#27ae60"></span>Safer route: <b>${data.safer.minutes} min</b></div>`;
+          html += `<div>Safer route (green): <b>${data.safer.minutes} min</b></div>`;
         } else {
           html += `<div><i>Showing one route only. ${esc(data.note)}</i></div>`;
         }
         routeInfo.innerHTML = html;
         map.fitBounds(bounds, { padding: [40, 40] });
-        walkStatus.textContent = "";
+        showStatus(walkStatus, "");
         adviceBox.textContent = data.advice;
         adviceBox.hidden = false;
       } catch (err) {
-        walkStatus.textContent = "";
+        showStatus(walkStatus, "");
         routeInfo.innerHTML = `<span class="error">Could not reach the server. Is app.py running?</span>`;
       }
     });
