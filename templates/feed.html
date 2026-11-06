@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Behind the scenes – SafeWalk SJ</title>
+  <title>Behind the scenes – SafeWalk</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="/static/common.css">
@@ -60,7 +60,7 @@
     <p class="admin-note">Admin view for the demo. In the real product this runs automatically on trusted sources
       (local news, city data, SJSU crime log). Users never upload here.</p>
     <p>Paste a local news article. Claude extracts each safety incident (never personal names) and saves it for the map.</p>
-    <a href="/">← Back to the SafeWalk SJ map</a>
+    <a href="/">← Back to the SafeWalk map</a>
   </header>
 
   <main>
@@ -84,6 +84,7 @@
 
       <section class="card legend">
         <h2>Map legend</h2>
+        <div id="dataToggle"></div>
         <h3>Incident pins</h3>
         <div class="items" id="pinLegend"></div>
         <h3>Safety zones</h3>
@@ -109,6 +110,7 @@
 
     document.getElementById("pinLegend").innerHTML = pinLegendHTML();
     document.getElementById("zonesToggle").onchange = (e) => sm.setZonesVisible(e.target.checked);
+    wireDataToggle(document.getElementById("dataToggle"), (mode) => sm.setDataMode(mode));
 
     // Show everything already saved
     sm.loadSaved()

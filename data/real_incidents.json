@@ -1,0 +1,802 @@
+{
+  "source": "City of San Jose Open Data - Police-Calls-for-Service (quarterly)",
+  "source_files": [
+    "https://data.sanjoseca.gov/dataset/c414a023-8e2c-4ed0-a0e0-2731913161a1/resource/627c51ce-c307-4446-9d7d-a39705def7ea/download/policecalls2026-q3.csv",
+    "https://data.sanjoseca.gov/dataset/c414a023-8e2c-4ed0-a0e0-2731913161a1/resource/ebddb75e-ee46-492c-8200-1cbff7ea58bf/download/policecalls2026-q4.csv"
+  ],
+  "generated_on": "2026-11-06",
+  "window": "last 30 days",
+  "incidents": [
+    {
+      "location_text": "0 block of North 7th Street",
+      "lat": 37.340118,
+      "lng": -121.884521,
+      "date": "2026-11-03",
+      "time_of_day": "morning",
+      "category": "harassment",
+      "summary": "Call to SJPD: Criminal threats.",
+      "source": "sjpd",
+      "call_type": "CRIMINAL THREATS",
+      "call_number": "P263070272"
+    },
+    {
+      "location_text": "400 block of West San Carlos Street",
+      "lat": 37.326671,
+      "lng": -121.896477,
+      "date": "2026-11-02",
+      "time_of_day": "afternoon",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, weapon.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, WEAPON",
+      "call_number": "P263060450"
+    },
+    {
+      "location_text": "East Santa Clara Street & South 6th Street",
+      "lat": 37.338463,
+      "lng": -121.885513,
+      "date": "2026-11-01",
+      "time_of_day": "afternoon",
+      "category": "assault",
+      "summary": "Call to SJPD: Firearms discharged.",
+      "source": "sjpd",
+      "call_type": "FIREARMS DISCHARGED",
+      "call_number": "P263050621"
+    },
+    {
+      "location_text": "0 block of West San Fernando Street",
+      "lat": 37.333889,
+      "lng": -121.889307,
+      "date": "2026-11-01",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, fight.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, FIGHT",
+      "call_number": "P263050170"
+    },
+    {
+      "location_text": "West Santa Clara Street & North Market Street",
+      "lat": 37.335461,
+      "lng": -121.892333,
+      "date": "2026-11-01",
+      "time_of_day": "night",
+      "category": "theft",
+      "summary": "Call to SJPD: Strong arm robbery.",
+      "source": "sjpd",
+      "call_type": "STRONG ARM ROBBERY",
+      "call_number": "P263050019"
+    },
+    {
+      "location_text": "0 block of North 4th Street",
+      "lat": 37.338624,
+      "lng": -121.88774,
+      "date": "2026-10-30",
+      "time_of_day": "morning",
+      "category": "assault",
+      "summary": "Call to SJPD: Assault with deadly weapon.",
+      "source": "sjpd",
+      "call_type": "ASSAULT WITH DEADLY WEAPON",
+      "call_number": "P263030173"
+    },
+    {
+      "location_text": "500 block of South 9th Street",
+      "lat": 37.331952,
+      "lng": -121.875621,
+      "date": "2026-10-28",
+      "time_of_day": "afternoon",
+      "category": "harassment",
+      "summary": "Call to SJPD: Criminal threats.",
+      "source": "sjpd",
+      "call_type": "CRIMINAL THREATS",
+      "call_number": "P263010553"
+    },
+    {
+      "location_text": "600 block of North 2nd Street",
+      "lat": 37.348789,
+      "lng": -121.89823,
+      "date": "2026-10-28",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, weapon.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, WEAPON",
+      "call_number": "P263010091"
+    },
+    {
+      "location_text": "East William Street & South 11th Street",
+      "lat": 37.333811,
+      "lng": -121.874523,
+      "date": "2026-10-27",
+      "time_of_day": "evening",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, weapon.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, WEAPON",
+      "call_number": "P263000730"
+    },
+    {
+      "location_text": "300 block of West Julian Street",
+      "lat": 37.335907,
+      "lng": -121.898862,
+      "date": "2026-10-27",
+      "time_of_day": "evening",
+      "category": "assault",
+      "summary": "Call to SJPD: Battery.",
+      "source": "sjpd",
+      "call_type": "BATTERY",
+      "call_number": "P263000623"
+    },
+    {
+      "location_text": "100 block of South 2nd Street",
+      "lat": 37.333835,
+      "lng": -121.886765,
+      "date": "2026-10-26",
+      "time_of_day": "evening",
+      "category": "harassment",
+      "summary": "Call to SJPD: Indecent exposure.",
+      "source": "sjpd",
+      "call_type": "INDECENT EXPOSURE",
+      "call_number": "P262990661"
+    },
+    {
+      "location_text": "600 block of South 11th Street",
+      "lat": 37.331464,
+      "lng": -121.872509,
+      "date": "2026-10-25",
+      "time_of_day": "afternoon",
+      "category": "assault",
+      "summary": "Call to SJPD: Battery.",
+      "source": "sjpd",
+      "call_type": "BATTERY",
+      "call_number": "P262980397"
+    },
+    {
+      "location_text": "500 block of South 10th Street",
+      "lat": 37.332423,
+      "lng": -121.874599,
+      "date": "2026-10-25",
+      "time_of_day": "morning",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, fight.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, FIGHT",
+      "call_number": "P262980209"
+    },
+    {
+      "location_text": "North Market Street & West Santa Clara Street",
+      "lat": 37.335461,
+      "lng": -121.892333,
+      "date": "2026-10-25",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, fight.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, FIGHT",
+      "call_number": "P262980123"
+    },
+    {
+      "location_text": "South 1st Street & East San Fernando Street",
+      "lat": 37.334481,
+      "lng": -121.888862,
+      "date": "2026-10-25",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, fight.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, FIGHT",
+      "call_number": "P262980108"
+    },
+    {
+      "location_text": "East Santa Clara Street & South 6th Street",
+      "lat": 37.338463,
+      "lng": -121.885513,
+      "date": "2026-10-24",
+      "time_of_day": "night",
+      "category": "harassment",
+      "summary": "Call to SJPD: Indecent exposure.",
+      "source": "sjpd",
+      "call_type": "INDECENT EXPOSURE",
+      "call_number": "P262970771"
+    },
+    {
+      "location_text": "North 7th Street & East Santa Clara Street",
+      "lat": 37.339296,
+      "lng": -121.884005,
+      "date": "2026-10-24",
+      "time_of_day": "morning",
+      "category": "harassment",
+      "summary": "Call to SJPD: Indecent exposure.",
+      "source": "sjpd",
+      "call_type": "INDECENT EXPOSURE",
+      "call_number": "P262970356"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-24",
+      "time_of_day": "morning",
+      "category": "harassment",
+      "summary": "Call to SJPD: Indecent exposure.",
+      "source": "sjpd",
+      "call_type": "INDECENT EXPOSURE",
+      "call_number": "P262970285"
+    },
+    {
+      "location_text": "West Santa Clara Street & North Almaden Avenue",
+      "lat": 37.334582,
+      "lng": -121.89412,
+      "date": "2026-10-24",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, fight.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, FIGHT",
+      "call_number": "P262970171"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-24",
+      "time_of_day": "night",
+      "category": "theft",
+      "summary": "Call to SJPD: Strong arm robbery.",
+      "source": "sjpd",
+      "call_type": "STRONG ARM ROBBERY",
+      "call_number": "P262970149"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-23",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, fight.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, FIGHT",
+      "call_number": "P262960033"
+    },
+    {
+      "location_text": "400 block of South 1st Street",
+      "lat": 37.329495,
+      "lng": -121.885366,
+      "date": "2026-10-22",
+      "time_of_day": "evening",
+      "category": "theft",
+      "summary": "Call to SJPD: Armed robbery.",
+      "source": "sjpd",
+      "call_type": "ARMED ROBBERY",
+      "call_number": "P262950690"
+    },
+    {
+      "location_text": "South Market Street & West San Carlos Street",
+      "lat": 37.331163,
+      "lng": -121.887993,
+      "date": "2026-10-20",
+      "time_of_day": "night",
+      "category": "theft",
+      "summary": "Call to SJPD: Theft.",
+      "source": "sjpd",
+      "call_type": "THEFT",
+      "call_number": "P262930061"
+    },
+    {
+      "location_text": "500 block of South 10th Street",
+      "lat": 37.332423,
+      "lng": -121.874599,
+      "date": "2026-10-19",
+      "time_of_day": "evening",
+      "category": "assault",
+      "summary": "Call to SJPD: Battery.",
+      "source": "sjpd",
+      "call_type": "BATTERY",
+      "call_number": "P262920609"
+    },
+    {
+      "location_text": "0 block of South 1st Street",
+      "lat": 37.335333,
+      "lng": -121.889737,
+      "date": "2026-10-14",
+      "time_of_day": "morning",
+      "category": "theft",
+      "summary": "Call to SJPD: Theft.",
+      "source": "sjpd",
+      "call_type": "THEFT",
+      "call_number": "P262870293"
+    },
+    {
+      "location_text": "400 block of North 4th Street",
+      "lat": 37.34532,
+      "lng": -121.892786,
+      "date": "2026-10-14",
+      "time_of_day": "morning",
+      "category": "theft",
+      "summary": "Call to SJPD: Theft.",
+      "source": "sjpd",
+      "call_type": "THEFT",
+      "call_number": "P262870136"
+    },
+    {
+      "location_text": "300 block of West Santa Clara Street",
+      "lat": 37.333155,
+      "lng": -121.896135,
+      "date": "2026-10-13",
+      "time_of_day": "night",
+      "category": "theft",
+      "summary": "Call to SJPD: Vehicle burglary.",
+      "source": "sjpd",
+      "call_type": "VEHICLE BURGLARY",
+      "call_number": "P262860850"
+    },
+    {
+      "location_text": "West Santa Clara Street & North Market Street",
+      "lat": 37.335461,
+      "lng": -121.892333,
+      "date": "2026-10-13",
+      "time_of_day": "afternoon",
+      "category": "assault",
+      "summary": "Call to SJPD: Brandishing a weapon.",
+      "source": "sjpd",
+      "call_type": "BRANDISHING A WEAPON",
+      "call_number": "P262860369"
+    },
+    {
+      "location_text": "East San Fernando Street & South 1st Street",
+      "lat": 37.334481,
+      "lng": -121.888862,
+      "date": "2026-10-11",
+      "time_of_day": "night",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, weapon.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, WEAPON",
+      "call_number": "P262840859"
+    },
+    {
+      "location_text": "500 block of South 6th Street",
+      "lat": 37.330527,
+      "lng": -121.878647,
+      "date": "2026-10-10",
+      "time_of_day": "evening",
+      "category": "assault",
+      "summary": "Call to SJPD: Disturbance, weapon.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE, WEAPON",
+      "call_number": "P262830712"
+    },
+    {
+      "location_text": "500 block of South 10th Street",
+      "lat": 37.332423,
+      "lng": -121.874599,
+      "date": "2026-10-07",
+      "time_of_day": "night",
+      "category": "theft",
+      "summary": "Call to SJPD: Robbery.",
+      "source": "sjpd",
+      "call_type": "ROBBERY",
+      "call_number": "P262800885"
+    },
+    {
+      "location_text": "400 block of West San Carlos Street",
+      "lat": 37.326671,
+      "lng": -121.896477,
+      "date": "2026-11-01",
+      "time_of_day": "morning",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263050280"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-31",
+      "time_of_day": "evening",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263040698"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-30",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263030033"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-30",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263030029"
+    },
+    {
+      "location_text": "0 block of South 1st Street",
+      "lat": 37.335333,
+      "lng": -121.889737,
+      "date": "2026-10-30",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263030003"
+    },
+    {
+      "location_text": "400 block of South 1st Street",
+      "lat": 37.329495,
+      "lng": -121.885366,
+      "date": "2026-10-29",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263020809"
+    },
+    {
+      "location_text": "300 block of West Julian Street",
+      "lat": 37.335907,
+      "lng": -121.898862,
+      "date": "2026-10-27",
+      "time_of_day": "evening",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263000627"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-27",
+      "time_of_day": "afternoon",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263000354"
+    },
+    {
+      "location_text": "500 block of South 9th Street",
+      "lat": 37.331952,
+      "lng": -121.875621,
+      "date": "2026-10-27",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P263000084"
+    },
+    {
+      "location_text": "400 block of North 4th Street",
+      "lat": 37.34532,
+      "lng": -121.892786,
+      "date": "2026-10-26",
+      "time_of_day": "afternoon",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262990613"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-25",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262980035"
+    },
+    {
+      "location_text": "South 1st Street & East San Fernando Street",
+      "lat": 37.334481,
+      "lng": -121.888862,
+      "date": "2026-10-23",
+      "time_of_day": "evening",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262960692"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-22",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Suspicious person.",
+      "source": "sjpd",
+      "call_type": "SUSPICIOUS PERSON",
+      "call_number": "P262950743"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-21",
+      "time_of_day": "afternoon",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262940623"
+    },
+    {
+      "location_text": "500 block of South 9th Street",
+      "lat": 37.331952,
+      "lng": -121.875621,
+      "date": "2026-10-19",
+      "time_of_day": "afternoon",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262920405"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-18",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262910120"
+    },
+    {
+      "location_text": "0 block of South 1st Street",
+      "lat": 37.335333,
+      "lng": -121.889737,
+      "date": "2026-10-18",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262910096"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-16",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262890749"
+    },
+    {
+      "location_text": "0 block of South 1st Street",
+      "lat": 37.335333,
+      "lng": -121.889737,
+      "date": "2026-10-13",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Suspicious person.",
+      "source": "sjpd",
+      "call_type": "SUSPICIOUS PERSON",
+      "call_number": "P262860059"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-11",
+      "time_of_day": "morning",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262840264"
+    },
+    {
+      "location_text": "0 block of South 2nd Street",
+      "lat": 37.335807,
+      "lng": -121.88818,
+      "date": "2026-10-10",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262830077"
+    },
+    {
+      "location_text": "0 block of South 1st Street",
+      "lat": 37.335333,
+      "lng": -121.889737,
+      "date": "2026-10-08",
+      "time_of_day": "afternoon",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262810493"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-08",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262810083"
+    },
+    {
+      "location_text": "500 block of South 10th Street",
+      "lat": 37.332423,
+      "lng": -121.874599,
+      "date": "2026-10-07",
+      "time_of_day": "evening",
+      "category": "other",
+      "summary": "Call to SJPD: Disturbance.",
+      "source": "sjpd",
+      "call_type": "DISTURBANCE",
+      "call_number": "P262800757"
+    },
+    {
+      "location_text": "100 block of East Santa Clara Street",
+      "lat": 37.337452,
+      "lng": -121.887481,
+      "date": "2026-10-07",
+      "time_of_day": "morning",
+      "category": "other",
+      "summary": "Call to SJPD: Suspicious person.",
+      "source": "sjpd",
+      "call_type": "SUSPICIOUS PERSON",
+      "call_number": "P262800214"
+    },
+    {
+      "location_text": "West Santa Clara Street & North Almaden Avenue",
+      "lat": 37.334582,
+      "lng": -121.89412,
+      "date": "2026-10-07",
+      "time_of_day": "night",
+      "category": "other",
+      "summary": "Call to SJPD: Suspicious person.",
+      "source": "sjpd",
+      "call_type": "SUSPICIOUS PERSON",
+      "call_number": "P262800006"
+    }
+  ],
+  "geocode_cache": {
+    "[0]-[100] N 7TH ST ": [
+      37.340118,
+      -121.884521
+    ],
+    "[400]-[500] W SAN CARLOS ST ": [
+      37.326671,
+      -121.896477
+    ],
+    "E SANTA CLARA ST & S 6TH ST": [
+      37.338463,
+      -121.885513
+    ],
+    "[0]-[100] W SAN FERNANDO ST ": [
+      37.333889,
+      -121.889307
+    ],
+    "W SANTA CLARA ST & N MARKET ST": [
+      37.335461,
+      -121.892333
+    ],
+    "[0]-[100] N 4TH ST ": [
+      37.338624,
+      -121.88774
+    ],
+    "[500]-[600] S 9TH ST ": [
+      37.331952,
+      -121.875621
+    ],
+    "[600]-[700] N 2ND ST ": [
+      37.348789,
+      -121.89823
+    ],
+    "E WILLIAM ST & S 11TH ST": [
+      37.333811,
+      -121.874523
+    ],
+    "[300]-[400] W JULIAN ST ": [
+      37.335907,
+      -121.898862
+    ],
+    "[100]-[200] S 2ND ST ": [
+      37.333835,
+      -121.886765
+    ],
+    "[600]-[700] S 11TH ST ": [
+      37.331464,
+      -121.872509
+    ],
+    "[500]-[600] S 10TH ST ": [
+      37.332423,
+      -121.874599
+    ],
+    "N MARKET ST & W SANTA CLARA ST": [
+      37.335461,
+      -121.892333
+    ],
+    "S 1ST ST & E SAN FERNANDO ST": [
+      37.334481,
+      -121.888862
+    ],
+    "N 7TH ST & E SANTA CLARA ST": [
+      37.339296,
+      -121.884005
+    ],
+    "[100]-[200] E SANTA CLARA ST ": [
+      37.337452,
+      -121.887481
+    ],
+    "W SANTA CLARA ST & N ALMADEN AV": [
+      37.334582,
+      -121.89412
+    ],
+    "[0]-[100] S 2ND ST ": [
+      37.335807,
+      -121.88818
+    ],
+    "[400]-[500] S 1ST ST ": [
+      37.329495,
+      -121.885366
+    ],
+    "S MARKET ST & W SAN CARLOS ST": [
+      37.331163,
+      -121.887993
+    ],
+    "[0]-[100] S 1ST ST ": [
+      37.335333,
+      -121.889737
+    ],
+    "[400]-[500] N 4TH ST ": [
+      37.34532,
+      -121.892786
+    ],
+    "[300]-[400] W SANTA CLARA ST ": [
+      37.333155,
+      -121.896135
+    ],
+    "E SAN FERNANDO ST & S 1ST ST": [
+      37.334481,
+      -121.888862
+    ],
+    "[500]-[600] S 6TH ST ": [
+      37.330527,
+      -121.878647
+    ]
+  },
+  "complete": false
+}

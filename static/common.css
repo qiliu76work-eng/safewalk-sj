@@ -29,3 +29,13 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0;
 .legend label { font-size: 14px; }
 
 .disclaimer { font-size: 12px; color: var(--muted); }
+
+/* Show: Real city data / Demo data / Both */
+.data-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; background: var(--bg); border-radius: 10px; padding: 4px; }
+.data-toggle-label { flex-basis: 100%; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: 2px 4px 0; }
+.data-toggle button {
+  flex: 1; min-height: 40px; padding: 6px 8px; border: none; border-radius: 8px; background: transparent;
+  font: inherit; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap;
+}
+.data-toggle button.on { background: #fff; color: var(--accent); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.data-source { font-size: 11px; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }

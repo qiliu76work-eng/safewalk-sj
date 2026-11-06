@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>SafeWalk SJ</title>
+  <title>SafeWalk</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="/static/common.css">
@@ -142,13 +142,15 @@
 
   <div class="topbar">
     <div class="brand">
-      <h1>SafeWalk SJ</h1>
+      <h1>SafeWalk</h1>
       <p>We read the news so you can walk home informed</p>
     </div>
-    <button class="legend-btn" id="legendBtn">Legend</button>
+    <button class="legend-btn" id="legendBtn">Layers</button>
   </div>
 
   <div id="legendCard" class="legend" hidden>
+    <div id="dataToggle"></div>
+    <p class="data-source" id="dataSource"></p>
     <h3>Incident pins</h3>
     <div class="items" id="pinLegend"></div>
     <h3>Safety zones</h3>
@@ -250,6 +252,11 @@
       card.hidden = !card.hidden;
     };
     document.getElementById("zonesToggle").onchange = (e) => sm.setZonesVisible(e.target.checked);
+    wireDataToggle(document.getElementById("dataToggle"), (mode) => { sm.setDataMode(mode); clearRoute(); });
+    fetch("/api/incidents").then(r => r.json()).then(d => {
+      if (d.real_meta) document.getElementById("dataSource").textContent =
+        `Real data: SJPD calls for service, ${d.real_meta.window} (City of San Jose open data, updated ${d.real_meta.generated_on}). Calls to police, not confirmed crimes.`;
+    }).catch(() => {});
 
     // ----- From / To -----
     const routeLayer = L.layerGroup().addTo(map);

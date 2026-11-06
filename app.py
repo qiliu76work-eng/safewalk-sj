@@ -148,9 +148,22 @@ def feed():
     return render_template("feed.html")
 
 
+REAL_PATH = DATA_DIR / "real_incidents.json"
+
+
+def load_real_incidents():
+    """SJPD calls for service from San Jose open data (built by build_real_data.py)."""
+    if not REAL_PATH.exists():
+        return [], None
+    data = json.loads(REAL_PATH.read_text(encoding="utf-8"))
+    meta = {k: data.get(k) for k in ("source", "generated_on", "window", "complete")}
+    return data["incidents"], meta
+
+
 @app.route("/api/incidents")
 def api_incidents():
-    return jsonify(incidents=load_saved_incidents())
+    real, real_meta = load_real_incidents()
+    return jsonify(incidents=load_saved_incidents(), real=real, real_meta=real_meta)
 
 
 @app.route("/api/extract", methods=["POST"])
@@ -193,6 +206,9 @@ Always respond by calling the give_walk_advice tool exactly once.
 - tip: one practical sentence (for example: stick to busier, well-lit streets, walk with a friend,
   or use the SJSU campus escort service).
 - details: 3 to 5 plain sentences comparing the routes and naming the incidents that made the difference.
+
+Some incidents are SJPD calls for service from public city data: these are calls to police, not
+confirmed crimes, so describe them as "calls to police" (e.g. "Two fight calls to police near 2nd St").
 
 Tone: calm and confident, never alarming. Never exaggerate risk and never label whole neighborhoods
 as dangerous. Plain text only, no markdown."""
@@ -317,7 +333,8 @@ def distance_to_route_m(point, coords):
 
 def incidents_near(route, incidents):
     return [
-        {k: inc[k] for k in ("category", "summary", "location_text", "date", "time_of_day")}
+        {**{k: inc[k] for k in ("category", "summary", "location_text", "date", "time_of_day")},
+         "kind": "SJPD call for service (public data)" if inc.get("source") == "sjpd" else "news report (demo data)"}
         for inc in incidents
         if distance_to_route_m([inc["lat"], inc["lng"]], route["coords"]) <= NEAR_ROUTE_METERS
     ]

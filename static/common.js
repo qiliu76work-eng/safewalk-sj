@@ -4,6 +4,7 @@
 const COLORS = { harassment: "#e84393", assault: "#6c3483", theft: "#2471a3", stalking: "#138d90", other: "#4d4d4d" };
 const ZONE_COLORS = { none: "#2ecc71", some: "#f1c40f", many: "#e74c3c" };
 const ROUTE_COLORS = { normal: "#7f8c8d", safer: "#27ae60" };
+const SJPD_RING = "#1f3a5f";  // dark ring around pins from real SJPD public data
 
 // Grid of ~150 m squares over downtown San Jose / SJSU. The grid is anchored
 // to a fixed corner so squares stay in the same place as incidents are added.
@@ -23,10 +24,33 @@ function showStatus(el, msg, { isError = false, loading = false } = {}) {
   el.className = "status" + (isError ? " error" : "");
 }
 
-// Legend rows for the pin categories
+// Legend rows for the pin categories, plus how to tell real SJPD pins from demo pins
 function pinLegendHTML() {
   return Object.entries(COLORS)
-    .map(([cat, color]) => `<div class="item"><span class="dot" style="background:${color}"></span>${cat}</div>`).join("");
+    .map(([cat, color]) => `<div class="item"><span class="dot" style="background:${color}"></span>${cat}</div>`).join("") +
+    `<div class="item"><span class="dot" style="background:#bbb"></span>Demo (news)</div>` +
+    `<div class="item"><span class="dot" style="background:#bbb;border-color:${SJPD_RING};border-width:3px;box-shadow:none"></span>SJPD call (public data)</div>`;
+}
+
+// "Show: Real city data / Demo data / Both" toggle. Calls onChange("real" | "demo" | "both").
+function dataToggleHTML() {
+  return `<div class="data-toggle" role="radiogroup" aria-label="Show">
+    <span class="data-toggle-label">Show:</span>
+    <button type="button" role="radio" data-mode="real" aria-checked="false">Real city data</button>
+    <button type="button" role="radio" data-mode="demo" aria-checked="false">Demo data</button>
+    <button type="button" role="radio" data-mode="both" class="on" aria-checked="true">Both</button>
+  </div>`;
+}
+
+function wireDataToggle(container, onChange) {
+  container.innerHTML = dataToggleHTML();
+  container.querySelectorAll("button").forEach(b => b.onclick = () => {
+    container.querySelectorAll("button").forEach(x => {
+      x.classList.toggle("on", x === b);
+      x.setAttribute("aria-checked", x === b);
+    });
+    onChange(b.dataset.mode);
+  });
 }
 
 // Creates a Leaflet map with incident pins and a safety-zones layer.
@@ -89,19 +113,39 @@ function createSafetyMap(elementId) {
 
   function addPin(inc) {
     const color = COLORS[inc.category] || COLORS.other;
+    const real = inc.source === "sjpd";
     L.circleMarker([inc.lat, inc.lng], {
-      radius: 9, color: "#fff", weight: 2, fillColor: color, fillOpacity: 0.9,
+      // SJPD calls: slightly smaller with a dark ring, so they're easy to tell from demo pins
+      radius: real ? 7 : 9, color: real ? SJPD_RING : "#fff", weight: real ? 3 : 2,
+      fillColor: color, fillOpacity: 0.9,
       bubblingMouseEvents: false  // tapping a pin opens its popup without counting as a map tap
-    }).bindPopup(
-      `<b>${esc(inc.category)}</b><br>${esc(inc.summary)}<br><br>` +
-      `<b>Where:</b> ${esc(inc.location_text)}<br>` +
-      `<b>When:</b> ${esc(inc.date)}, ${esc(inc.time_of_day)}`
+    }).bindPopup(real
+      ? `<b>SJPD call (public data)</b><br>${esc(inc.call_type ? inc.call_type.toLowerCase() : inc.category)}<br><br>` +
+        `<b>Where:</b> ${esc(inc.location_text)}<br>` +
+        `<b>When:</b> ${esc(inc.date)}, ${esc(inc.time_of_day)}<br>` +
+        `<small>A call to police, not a confirmed crime. Location is approximate (block level).</small>`
+      : `<b>${esc(inc.category)}</b> <small>(demo data)</small><br>${esc(inc.summary)}<br><br>` +
+        `<b>Where:</b> ${esc(inc.location_text)}<br>` +
+        `<b>When:</b> ${esc(inc.date)}, ${esc(inc.time_of_day)}`
     ).addTo(pins);
+  }
+
+  // All loaded data, by source; the "Show" toggle picks which of it is on the map
+  const loaded = { demo: [], real: [] };
+  let mode = "both";
+
+  function render() {
+    pins.clearLayers();
+    incidents.length = 0;
+    const list = mode === "real" ? loaded.real : mode === "demo" ? loaded.demo : loaded.demo.concat(loaded.real);
+    list.forEach(addPin);
+    incidents.push(...list);
+    recomputeZones();
   }
 
   return {
     map,
-    incidents,
+    incidents,  // what's currently shown (also what zones and Plan my walk use)
     getRedSquares: () => redSquares,
     addIncidents(list) {
       list.forEach(addPin);
@@ -116,11 +160,18 @@ function createSafetyMap(elementId) {
     setZonesVisible(show) {
       if (show) zones.addTo(map); else zones.remove();
     },
+    // mode: "real" | "demo" | "both"
+    setDataMode(m) {
+      mode = m;
+      render();
+    },
     async loadSaved() {
       const res = await fetch("/api/incidents");
       const data = await res.json();
-      this.addIncidents(data.incidents);
-      return data.incidents.length;
+      loaded.demo = data.incidents;
+      loaded.real = data.real || [];
+      render();
+      return incidents.length;
     }
   };
 }
