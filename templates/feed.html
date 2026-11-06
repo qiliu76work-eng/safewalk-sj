@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Behind the scenes – SafeWalk SJ</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="/static/common.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    header { background: var(--navy); color: #fff; padding: 14px 20px; }
+    header h1 { margin: 0; font-size: 21px; }
+    header p { margin: 4px 0 0; font-size: 14px; opacity: .85; }
+    header a { color: #bcd8f5; font-size: 14px; text-decoration: none; display: inline-block; margin-top: 6px; }
+
+    main { flex: 1; display: flex; flex-direction: column; }
+    #panel { padding: 14px; }
+    #map { height: 60vh; min-height: 320px; }
+
+    /* Side-by-side on wider screens */
+    @media (min-width: 900px) {
+      body { height: 100vh; }
+      main { flex-direction: row; min-height: 0; }
+      #panel { width: 400px; overflow-y: auto; border-right: 1px solid var(--border); }
+      #map { flex: 1; height: auto; }
+    }
+
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 4px; font-size: 16px; color: var(--navy); }
+    .hint { margin: 0 0 10px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+    textarea {
+      width: 100%; height: 170px; font: inherit; font-size: 14px; padding: 8px;
+      border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+    }
+    .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    button {
+      padding: 10px 14px; min-height: 44px; border-radius: 8px; border: 1px solid var(--border); background: #fff;
+      color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+    }
+    button:hover { background: #f0f3f6; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover { background: #1b5a85; }
+    button:disabled { opacity: .6; cursor: wait; }
+
+    #results:empty { display: none; }
+    .inc { border-left: 4px solid; padding: 6px 10px; margin: 8px 0; background: var(--bg); border-radius: 4px; font-size: 13px; line-height: 1.4; }
+    .inc b { text-transform: capitalize; }
+    .inc .meta { color: var(--muted); font-size: 12px; }
+    .disclaimer { text-align: center; margin: 4px 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Behind the scenes: Claude reads the news</h1>
+    <p>Paste a local news article. Claude extracts each safety incident (never personal names) and saves it for the map.</p>
+    <a href="/">← Back to the SafeWalk SJ map</a>
+  </header>
+
+  <main>
+    <div id="panel">
+      <section class="card">
+        <h2>Add an article</h2>
+        <p class="hint">New incidents are saved to <code>data/incidents.json</code> and appear on the main map after a refresh.</p>
+        <textarea id="article" placeholder="Paste article text here..."></textarea>
+        <div class="row">
+          <button id="submit" class="primary">Extract incidents</button>
+          <button id="samples">Load samples</button>
+          <button id="clear">Clear map</button>
+        </div>
+        <div id="status" class="status"></div>
+      </section>
+
+      <section class="card" id="resultsCard" hidden>
+        <h2>What Claude found</h2>
+        <div id="results"></div>
+      </section>
+
+      <section class="card legend">
+        <h2>Map legend</h2>
+        <h3>Incident pins</h3>
+        <div class="items" id="pinLegend"></div>
+        <h3>Safety zones</h3>
+        <label><input type="checkbox" id="zonesToggle" checked> Show safety zones</label>
+        <p class="note">Reported incidents nearby. Green = no recent reports, not a guarantee of safety.</p>
+        <div class="items">
+          <div class="item"><span class="sq" style="background:#2ecc71"></span>0 reports</div>
+          <div class="item"><span class="sq" style="background:#f1c40f"></span>1–2 reports</div>
+          <div class="item"><span class="sq" style="background:#e74c3c"></span>3+ reports</div>
+        </div>
+      </section>
+
+      <p class="disclaimer">Locations are approximate. All sample data is synthetic.</p>
+    </div>
+    <div id="map"></div>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    const sm = createSafetyMap("map");
+    const statusEl = document.getElementById("status");
+    const setStatus = (msg, isError = false, loading = false) => showStatus(statusEl, msg, { isError, loading });
+
+    document.getElementById("pinLegend").innerHTML = pinLegendHTML();
+    document.getElementById("zonesToggle").onchange = (e) => sm.setZonesVisible(e.target.checked);
+
+    // Show everything already saved
+    sm.loadSaved()
+      .then(n => setStatus(`${n} saved incident(s) on the map.`))
+      .catch(() => setStatus("Couldn't load saved incidents. Is app.py running?", true));
+
+    function showResults(list) {
+      document.getElementById("resultsCard").hidden = false;
+      document.getElementById("results").innerHTML = list.length ? list.map(inc => `
+        <div class="inc" style="border-color:${COLORS[inc.category] || COLORS.other}">
+          <b>${esc(inc.category)}</b> – ${esc(inc.summary)}
+          <div class="meta">${esc(inc.location_text)} · ${esc(inc.date)}, ${esc(inc.time_of_day)}</div>
+        </div>`).join("") : "<p class='hint'>No safety incidents in this article.</p>";
+    }
+
+    document.getElementById("submit").onclick = async () => {
+      const text = document.getElementById("article").value.trim();
+      if (!text) return setStatus("Please paste an article first.", true);
+      const btn = document.getElementById("submit");
+      btn.disabled = true;
+      setStatus("Claude is reading the article... (this can take a little while)", false, true);
+      try {
+        const res = await fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (!res.ok) return setStatus(data.error || "Something went wrong.", true);
+        // Reload from the saved file so a re-extracted article replaces its old pins
+        sm.clear();
+        await sm.loadSaved();
+        showResults(data.incidents);
+        setStatus(`Found ${data.incidents.length} incident(s). Saved – ${data.total_saved} incident(s) total. Refresh the main map to see them.`);
+      } catch (e) {
+        setStatus("Could not reach the server. Is app.py running?", true);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // Puts all sample articles into the text box; then click "Extract incidents"
+    document.getElementById("samples").onclick = async () => {
+      const res = await fetch("/api/samples");
+      const samples = await res.json();
+      document.getElementById("article").value = samples
+        .map(s => `--- ${s.headline} ---\n${s.body}`).join("\n\n");
+      setStatus(`Loaded ${samples.length} sample articles. Click "Extract incidents".`);
+    };
+
+    // Clears this map view only; saved incidents are not deleted
+    document.getElementById("clear").onclick = () => {
+      sm.clear();
+      document.getElementById("resultsCard").hidden = true;
+      setStatus("Map view cleared (saved incidents are not deleted).");
+    };
+  </script>
+</body>
+</html>

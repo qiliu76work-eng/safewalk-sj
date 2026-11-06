@@ -1,0 +1,162 @@
+[
+  {
+    "location_text": "Outdoor table at a San Pedro Square restaurant",
+    "lat": 37.3366,
+    "lng": -121.8944,
+    "date": "2025-10-03",
+    "time_of_day": "night",
+    "category": "theft",
+    "summary": "A diner's phone was grabbed from an outdoor table. The suspect fled on foot toward St. John Street.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "From a bar in San Pedro Square, several blocks toward a hotel lobby on Santa Clara Street",
+    "lat": 37.3366,
+    "lng": -121.894,
+    "date": "2025-10-11",
+    "time_of_day": "night",
+    "category": "stalking",
+    "summary": "A woman said a man who had watched her inside a bar followed her for several blocks. She took refuge in a hotel lobby; no arrest was made.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Near San Pedro Square Market entrance",
+    "lat": 37.3365,
+    "lng": -121.8943,
+    "date": "2025-10-19",
+    "time_of_day": "night",
+    "category": "assault",
+    "summary": "A fight spilled from a nearby bar onto the sidewalk, leaving two men with minor injuries. One man was cited for battery.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "St. James Park, walking toward 1st Street",
+    "lat": 37.3411,
+    "lng": -121.8918,
+    "date": "2025-10-07",
+    "time_of_day": "afternoon",
+    "category": "harassment",
+    "summary": "A student was verbally harassed and blocked from leaving by a group of three people while cutting through the park. The student walked away toward 1st Street.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "St. James and 3rd streets, northeast corner of St. James Park",
+    "lat": 37.342,
+    "lng": -121.89,
+    "date": "2025-10-14",
+    "time_of_day": "evening",
+    "category": "assault",
+    "summary": "A cyclist was pushed off his bike and the bike was stolen. The rider suffered scrapes and the suspect rode toward Julian Street.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "VTA light rail southbound on 2nd Street, exited near Paseo de San Antonio (date vague: 'last week')",
+    "lat": 37.335,
+    "lng": -121.8885,
+    "date": "unknown",
+    "time_of_day": "evening",
+    "category": "harassment",
+    "summary": "A woman reported a man repeatedly touched her and made sexual comments on light rail. VTA is reviewing camera footage.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Parking lot next to Diridon Station",
+    "lat": 37.3299,
+    "lng": -121.902,
+    "date": "2025-10-16",
+    "time_of_day": "morning",
+    "category": "theft",
+    "summary": "A laptop and backpack were stolen from a parked car after its rear window was smashed. Police said there have been several vehicle break-ins near the station this month.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Somewhere in the downtown area (vague)",
+    "lat": 37.3352,
+    "lng": -121.893,
+    "date": "unknown",
+    "time_of_day": "night",
+    "category": "harassment",
+    "summary": "Several people reported online a man approaching pedestrians and demanding money over several weeks, mostly at night. Police have received a few calls but no confirmed location.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "St. James Park near North 3rd Street",
+    "lat": 37.342,
+    "lng": -121.89,
+    "date": "2025-10-22",
+    "time_of_day": "night",
+    "category": "theft",
+    "summary": "A woman's purse was grabbed from her shoulder. The suspect ran north on 3rd Street and she was not hurt.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "North 3rd Street edge of St. James Park",
+    "lat": 37.3422,
+    "lng": -121.89,
+    "date": "2025-10-25",
+    "time_of_day": "night",
+    "category": "assault",
+    "summary": "A pedestrian was punched by a stranger and treated for a bloody nose. The attacker fled on foot.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "From light rail toward St. James Park along North 3rd Street, ending at 3rd and St. James streets",
+    "lat": 37.342,
+    "lng": -121.89,
+    "date": "2025-10-28",
+    "time_of_day": "night",
+    "category": "stalking",
+    "summary": "A woman reported a man followed her and kept pace with her along North 3rd Street. The man walked away before officers arrived.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "St. James Park near North 3rd Street",
+    "lat": 37.342,
+    "lng": -121.89,
+    "date": "2025-10-31",
+    "time_of_day": "night",
+    "category": "harassment",
+    "summary": "A group of men shouted at two students, made crude comments and tried to block their path. The students crossed the street and reported it to campus police.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Santa Clara Street light rail stop on 2nd Street",
+    "lat": 37.3359,
+    "lng": -121.8886,
+    "date": "2025-10-23",
+    "time_of_day": "night",
+    "category": "theft",
+    "summary": "A rider's phone was snatched from his hand while waiting at the stop. The suspect ran east on Santa Clara Street.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Light rail platform on 2nd Street at Santa Clara Street",
+    "lat": 37.3359,
+    "lng": -121.8886,
+    "date": "2025-10-26",
+    "time_of_day": "night",
+    "category": "harassment",
+    "summary": "A man stood close to a woman, made sexual comments and wouldn't leave her alone. VTA security escorted her onto the next train.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Light rail stop on 2nd Street at Santa Clara Street",
+    "lat": 37.3359,
+    "lng": -121.8886,
+    "date": "2025-10-29",
+    "time_of_day": "night",
+    "category": "assault",
+    "summary": "An argument turned into a fight, leaving one person with minor injuries. Police detained one man.",
+    "source": "4243a295642f"
+  },
+  {
+    "location_text": "Light rail stop on 1st Street at Santa Clara Street",
+    "lat": 37.3352,
+    "lng": -121.8935,
+    "date": "2025-11-03",
+    "time_of_day": "night",
+    "category": "theft",
+    "summary": "A backpack containing a laptop was taken from a bench while its owner looked at the train schedule. Police are reviewing camera footage.",
+    "source": "4243a295642f"
+  }
+]

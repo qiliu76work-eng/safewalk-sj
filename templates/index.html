@@ -2,377 +2,459 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>SafeWalk SJ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="/static/common.css">
   <style>
-    :root {
-      --navy: #1f3a5f; --accent: #2471a3; --text: #2c3e50; --muted: #6b7785;
-      --border: #e3e7ec; --bg: #f5f7fa;
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; color: var(--text);
-      display: flex; flex-direction: column; height: 100vh; background: var(--bg);
-    }
+    html, body { height: 100%; overflow: hidden; }
+    #map { position: fixed; inset: 0; z-index: 0; }
 
-    /* Header */
-    header {
-      background: var(--navy); color: #fff; padding: 14px 24px;
-      display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
-      box-shadow: 0 2px 6px rgba(0,0,0,.15); z-index: 1000;
+    /* Top bar floating over the map */
+    .topbar {
+      position: fixed; top: 10px; left: 10px; right: 10px; z-index: 1000;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none;
     }
-    header h1 { margin: 0; font-size: 24px; letter-spacing: .3px; }
-    header p { margin: 0; font-size: 15px; opacity: .85; font-style: italic; }
-
-    /* Layout */
-    main { flex: 1; display: flex; min-height: 0; }
-    #panel { width: 380px; overflow-y: auto; padding: 14px; background: var(--bg); border-right: 1px solid var(--border); }
-    #map { flex: 1; }
-
-    /* Panel sections */
-    .card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-    .card h2 { margin: 0 0 4px; font-size: 16px; color: var(--navy); display: flex; align-items: center; gap: 8px; }
-    .card h2 .num {
-      background: var(--navy); color: #fff; width: 22px; height: 22px; border-radius: 50%;
-      font-size: 12px; display: inline-flex; align-items: center; justify-content: center;
+    .topbar > * { pointer-events: auto; }
+    .brand {
+      background: var(--navy); color: #fff; border-radius: 12px; padding: 8px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25); max-width: 70%;
     }
-    .hint { margin: 0 0 10px; font-size: 13px; color: var(--muted); line-height: 1.4; }
-    textarea {
-      width: 100%; height: 150px; font: inherit; font-size: 13px; padding: 8px;
-      border: 1px solid var(--border); border-radius: 6px; resize: vertical;
+    .brand h1 { margin: 0; font-size: 17px; }
+    .brand p { margin: 2px 0 0; font-size: 12px; opacity: .85; font-style: italic; }
+    .brand a { color: #bcd8f5; font-size: 12px; text-decoration: none; display: inline-block; margin-top: 4px; }
+    .legend-btn {
+      background: #fff; border: none; border-radius: 12px; padding: 10px 14px; font: inherit; font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25); cursor: pointer; min-height: 44px;
     }
-    .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
-    button {
-      padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: #fff;
-      color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+    #legendCard {
+      position: fixed; top: 64px; right: 10px; z-index: 1000; width: min(300px, calc(100% - 20px));
+      background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 4px 16px rgba(0,0,0,.25);
     }
-    button:hover { background: #f0f3f6; }
-    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    button.primary:hover { background: #1b5a85; }
-    button:disabled { opacity: .6; cursor: wait; }
-    #walkBtn.active { background: #27ae60; border-color: #27ae60; color: #fff; }
-    label { font-size: 14px; }
-    input[type="time"] { font: inherit; font-size: 14px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; }
+    .leaflet-top.leaflet-left { top: 96px; }  /* keep zoom buttons below the brand box */
 
-    .status { font-size: 14px; margin-top: 8px; min-height: 0; }
-    .status:empty { display: none; }
-    .error { color: #b00020; }
-    #routeInfo { font-size: 14px; margin-top: 8px; }
-    #routeInfo div { margin: 3px 0; }
-    .advice { margin-top: 10px; padding: 10px 12px; background: #eef7f0; border-left: 4px solid #27ae60; border-radius: 4px; font-size: 14px; line-height: 1.45; }
-
-    /* Spinner */
-    .spinner {
-      display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
-      border: 2px solid #cfd8e3; border-top-color: var(--accent); border-radius: 50%;
-      animation: spin .8s linear infinite;
+    /* Bottom sheet */
+    #sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+      background: #fff; border-radius: 18px 18px 0 0; box-shadow: 0 -4px 16px rgba(0,0,0,.18);
+      padding: 8px 16px calc(14px + env(safe-area-inset-bottom));
+      max-height: 58vh; overflow-y: auto;
+      max-width: 560px; margin: 0 auto;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .grabber { width: 40px; height: 5px; background: #d5dbe2; border-radius: 3px; margin: 2px auto 8px; }
+    #sheet h2 { margin: 0 0 10px; font-size: 19px; color: var(--navy); }
+    .field { margin-bottom: 12px; }
+    .field-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    /* From / To search boxes */
+    .search { margin-bottom: 4px; }
+    .search .field-label { display: block; }
+    .search-row { display: flex; gap: 6px; }
+    .search input {
+      flex: 1; min-width: 0; font: inherit; font-size: 16px; /* 16px stops iPhones zooming in */
+      padding: 12px; min-height: 50px; border: 2px solid var(--border); border-radius: 12px; background: #fff;
+    }
+    .search input:focus { outline: none; border-color: var(--accent); }
+    .search input.set { border-color: #9cc3e3; background: #f6fafd; }
+    .icon-btn {
+      flex: none; min-height: 50px; padding: 0 12px; border-radius: 12px; border: 2px solid var(--border);
+      background: #fff; font: inherit; font-size: 14px; color: var(--accent); cursor: pointer; white-space: nowrap;
+    }
+    .swap-row { display: flex; justify-content: flex-end; margin: -6px 0 -22px; position: relative; z-index: 2; pointer-events: none; }
+    .swap-btn {
+      pointer-events: auto; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border); background: #fff;
+      font-size: 20px; color: var(--accent); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+    .suggestions {
+      margin-top: 4px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12); background: #fff;
+    }
+    .suggestions button {
+      display: block; width: 100%; text-align: left; padding: 12px 14px; min-height: 48px;
+      border: none; border-bottom: 1px solid var(--border); background: #fff;
+      font: inherit; font-size: 15px; color: var(--text); cursor: pointer;
+    }
+    .suggestions button:last-child { border-bottom: none; }
+    .suggestions button:hover, .suggestions button:focus { background: #e8f1f9; outline: none; }
+    .suggestions .msg { padding: 12px 14px; font-size: 14px; color: var(--muted); }
 
-    /* Combined legend */
-    .legend h3 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
-    .legend h3:first-of-type { margin-top: 4px; }
-    .legend .items { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
-    .legend .item { font-size: 13px; display: flex; align-items: center; }
-    .legend .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; border: 2px solid #fff; box-shadow: 0 0 0 1px #ccc; }
-    .legend .sq { width: 14px; height: 14px; border-radius: 2px; margin-right: 6px; opacity: .6; }
-    .legend .line { width: 22px; height: 5px; border-radius: 3px; margin-right: 6px; }
-    .legend .note { font-size: 12px; color: var(--muted); margin: 6px 0; line-height: 1.4; }
-
-    .disclaimer { font-size: 12px; color: var(--muted); text-align: center; margin: 4px 0 8px; }
+    /* Quick-pick chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chips button {
+      padding: 8px 12px; min-height: 38px; border-radius: 19px; border: 1px solid var(--border);
+      background: var(--bg); font: inherit; font-size: 13px; color: var(--text); cursor: pointer;
+    }
+    .chips button.selected { border-color: var(--accent); background: #e8f1f9; color: var(--accent); font-weight: 600; }
+    .tap-hint { font-size: 14px; color: var(--muted); margin: 8px 0 12px; }
+    input[type="time"] {
+      font: inherit; font-size: 18px; padding: 10px 12px; border: 2px solid var(--border); border-radius: 12px;
+      width: 100%; min-height: 52px; background: #fff; margin-top: 8px;
+    }
+    input[type="time"][hidden] { display: none; }
+    .when-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; }
+    .when-toggle button {
+      flex: 1; min-height: 46px; border: none; border-radius: 9px; background: transparent;
+      font: inherit; font-size: 16px; color: var(--muted); cursor: pointer;
+    }
+    .when-toggle button.on { background: #fff; color: var(--accent); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    #planBtn {
+      width: 100%; min-height: 56px; border: none; border-radius: 14px; background: var(--safe); color: #fff;
+      font: inherit; font-size: 18px; font-weight: 600; cursor: pointer; margin-top: 4px;
+    }
+    #planBtn:disabled { background: #a9c9b5; cursor: not-allowed; }
+    #routeInfo { font-size: 15px; margin-top: 10px; }
+    #routeInfo div { margin: 4px 0; display: flex; align-items: center; }
+    #routeInfo .line { width: 22px; height: 5px; border-radius: 3px; margin-right: 8px; flex: none; }
+    .advice { margin-top: 10px; padding: 12px; background: #eef7f0; border-left: 4px solid var(--safe); border-radius: 6px; font-size: 15px; line-height: 1.5; }
+    .advice-title { font-size: 13px; font-weight: 600; color: var(--safe); margin-bottom: 4px; }
+    .disclaimer { text-align: center; margin: 12px 0 0; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>SafeWalk SJ</h1>
-    <p>We read the news so you can walk home informed</p>
-  </header>
+  <div id="map"></div>
 
-  <main>
-    <div id="panel">
-      <section class="card">
-        <h2><span class="num">1</span>Add an article</h2>
-        <p class="hint">Paste a local news article. Claude finds the safety incidents and pins them on the map.</p>
-        <textarea id="article" placeholder="Paste article text here..."></textarea>
-        <div class="row">
-          <button id="submit" class="primary">Extract incidents</button>
-          <button id="clear">Clear map</button>
-        </div>
-        <div id="status" class="status"></div>
-      </section>
-
-      <section class="card">
-        <h2><span class="num">2</span>Load samples</h2>
-        <p class="hint">No article handy? Fill the box above with synthetic downtown San Jose news briefs, then click <b>Extract incidents</b>.</p>
-        <button id="samples">Load samples</button>
-      </section>
-
-      <section class="card">
-        <h2><span class="num">3</span>Plan my walk</h2>
-        <p class="hint">Click <b>Plan my walk</b>, then click a start point and an end point on the map.</p>
-        <label>When are you walking? <input type="time" id="walkTime" value="22:00"></label>
-        <div class="row">
-          <button id="walkBtn" class="primary">Plan my walk</button>
-          <button id="walkClear">Clear route</button>
-        </div>
-        <div id="walkStatus" class="status"></div>
-        <div id="routeInfo"></div>
-        <div id="advice" class="advice" hidden></div>
-      </section>
-
-      <section class="card legend">
-        <h2>Map legend</h2>
-        <h3>Incident pins</h3>
-        <div class="items" id="legend"></div>
-
-        <h3>Safety zones</h3>
-        <label><input type="checkbox" id="zonesToggle" checked> Show safety zones</label>
-        <p class="note">Reported incidents nearby. Green = no recent reports, not a guarantee of safety.</p>
-        <div class="items">
-          <div class="item"><span class="sq" style="background:#2ecc71"></span>0 reports</div>
-          <div class="item"><span class="sq" style="background:#f1c40f"></span>1–2 reports</div>
-          <div class="item"><span class="sq" style="background:#e74c3c"></span>3+ reports</div>
-        </div>
-
-        <h3>Routes</h3>
-        <div class="items">
-          <div class="item"><span class="line" style="background:#7f8c8d"></span>Normal route</div>
-          <div class="item"><span class="line" style="background:#27ae60"></span>Safer route</div>
-        </div>
-      </section>
-
-      <p class="disclaimer">Locations are approximate. All sample data is synthetic.</p>
+  <div class="topbar">
+    <div class="brand">
+      <h1>SafeWalk SJ</h1>
+      <p>We read the news so you can walk home informed</p>
+      <a href="/feed">Behind the scenes →</a>
     </div>
-    <div id="map"></div>
-  </main>
+    <button class="legend-btn" id="legendBtn">Legend</button>
+  </div>
 
+  <div id="legendCard" class="legend" hidden>
+    <h3>Incident pins</h3>
+    <div class="items" id="pinLegend"></div>
+    <h3>Safety zones</h3>
+    <label><input type="checkbox" id="zonesToggle" checked> Show safety zones</label>
+    <p class="note">Reported incidents nearby. Green = no recent reports, not a guarantee of safety.</p>
+    <div class="items">
+      <div class="item"><span class="sq" style="background:#2ecc71"></span>0 reports</div>
+      <div class="item"><span class="sq" style="background:#f1c40f"></span>1–2 reports</div>
+      <div class="item"><span class="sq" style="background:#e74c3c"></span>3+ reports</div>
+    </div>
+    <h3>Routes</h3>
+    <div class="items">
+      <div class="item"><span class="line" style="background:#7f8c8d"></span>Normal route</div>
+      <div class="item"><span class="line" style="background:#27ae60"></span>Safer route</div>
+    </div>
+  </div>
+
+  <div id="sheet">
+    <div class="grabber"></div>
+    <h2>Where are you walking?</h2>
+
+    <div class="route-fields">
+      <div class="search">
+        <label class="field-label" for="fromInput">From</label>
+        <div class="search-row">
+          <input id="fromInput" type="search" autocomplete="off" enterkeyhint="search"
+                 value="SJSU King Library" placeholder="Search a place or street">
+          <button class="icon-btn" id="myLocation" title="Use my location">📍 <span>My location</span></button>
+        </div>
+        <div class="suggestions" id="fromSuggest" hidden></div>
+      </div>
+
+      <div class="swap-row">
+        <button class="swap-btn" id="swapBtn" title="Swap From and To" aria-label="Swap From and To">⇅</button>
+      </div>
+
+      <div class="search">
+        <label class="field-label" for="toInput">To</label>
+        <div class="search-row">
+          <input id="toInput" type="search" autocomplete="off" enterkeyhint="search"
+                 placeholder="Search a place or street">
+        </div>
+        <div class="suggestions" id="toSuggest" hidden></div>
+      </div>
+    </div>
+
+    <div class="chips" id="destChips"></div>
+    <div class="tap-hint" id="tapHint">or tap the map to set <b id="tapTarget">To</b></div>
+
+    <div class="field">
+      <div class="field-label">When?</div>
+      <div class="when-toggle" role="radiogroup" aria-label="When are you walking?">
+        <button type="button" role="radio" id="leaveNow" class="on" aria-checked="true">Leave now</button>
+        <button type="button" role="radio" id="pickTime" aria-checked="false">Pick a time</button>
+      </div>
+      <input type="time" id="walkTime" value="22:00" hidden>
+    </div>
+
+    <button id="planBtn" disabled>Plan my walk</button>
+    <div id="walkStatus" class="status"></div>
+    <div id="routeInfo"></div>
+    <div id="advice" class="advice" hidden></div>
+
+    <p class="disclaimer">Locations are approximate. All sample data is synthetic.</p>
+  </div>
+
+  <script src="/static/common.js"></script>
   <script>
-    // Pin colors avoid red/yellow/green, which are reserved for safety-zone levels
-    const COLORS = { harassment: "#e84393", assault: "#6c3483", theft: "#2471a3", stalking: "#138d90", other: "#4d4d4d" };
+    const sm = createSafetyMap("map");
+    const map = sm.map;
 
-    const map = L.map("map").setView([37.3352, -121.8811], 15);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map);
-    const pins = L.layerGroup().addTo(map);
+    const START_DEFAULT = { name: "SJSU King Library", pt: [37.3354, -121.8853] };
+    const DESTINATIONS = [
+      { name: "Santa Clara St light rail station", pt: [37.3363, -121.8889] },
+      { name: "Diridon Station", pt: [37.3297, -121.9026] },
+      { name: "San Pedro Square", pt: [37.3363, -121.8943] },
+      { name: "SAP Center", pt: [37.3327, -121.9011] },
+    ];
 
-    // ---------- Safety zones ----------
-    // Grid of ~150 m squares over downtown San Jose / SJSU. The grid is anchored
-    // to a fixed corner so squares stay in the same place as incidents are added.
-    const CELL_LAT = 0.0014, CELL_LNG = 0.0017;
-    const GRID = { south: 37.3180, west: -121.9100, north: 37.3520, east: -121.8700 };
-    const ZONE_COLORS = { none: "#2ecc71", some: "#f1c40f", many: "#e74c3c" };
-
-    // Separate pane under the pins so zones never block clicking a pin
-    map.createPane("zones");
-    map.getPane("zones").style.zIndex = 350;
-    const zones = L.layerGroup().addTo(map);
-    const incidents = [];  // every incident currently on the map
-
-    function cellOf(lat, lng) {
-      if (lat < GRID.south || lat >= GRID.north || lng < GRID.west || lng >= GRID.east) return null;
-      return [Math.floor((lat - GRID.south) / CELL_LAT), Math.floor((lng - GRID.west) / CELL_LNG)];
-    }
-
-    let redSquares = [];  // red squares as GeoJSON rings ([lng, lat] corners), for route avoidance
-
-    function recomputeZones() {
-      zones.clearLayers();
-      redSquares = [];
-      const counts = new Map();  // "row,col" -> number of incidents
-      for (const inc of incidents) {
-        const cell = cellOf(inc.lat, inc.lng);
-        if (!cell) continue;  // outside the downtown grid
-        const key = cell.join(",");
-        counts.set(key, (counts.get(key) || 0) + 1);
-      }
-      // Draw squares with incidents, plus green squares only in the ring around them
-      const toDraw = new Set();
-      for (const key of counts.keys()) {
-        const [r, c] = key.split(",").map(Number);
-        for (let dr = -1; dr <= 1; dr++)
-          for (let dc = -1; dc <= 1; dc++) {
-            const rr = r + dr, cc = c + dc;
-            const s = GRID.south + rr * CELL_LAT, w = GRID.west + cc * CELL_LNG;
-            if (s >= GRID.south && s < GRID.north && w >= GRID.west && w < GRID.east) toDraw.add(`${rr},${cc}`);
-          }
-      }
-      for (const key of toDraw) {
-        const [r, c] = key.split(",").map(Number);
-        const n = counts.get(key) || 0;
-        const color = n === 0 ? ZONE_COLORS.none : n <= 2 ? ZONE_COLORS.some : ZONE_COLORS.many;
-        const s = GRID.south + r * CELL_LAT, w = GRID.west + c * CELL_LNG;
-        if (n >= 3) {
-          const nn = s + CELL_LAT, e = w + CELL_LNG;
-          redSquares.push([[w, s], [e, s], [e, nn], [w, nn], [w, s]]);
-        }
-        L.rectangle([[s, w], [s + CELL_LAT, w + CELL_LNG]], {
-          pane: "zones", interactive: false,
-          color, weight: 1, opacity: 0.4, fillColor: color, fillOpacity: 0.25
-        }).addTo(zones);
-      }
-    }
-
-    document.getElementById("zonesToggle").onchange = (e) => {
-      if (e.target.checked) zones.addTo(map); else zones.remove();
-    };
-
-    document.getElementById("legend").innerHTML = Object.entries(COLORS)
-      .map(([cat, color]) => `<div class="item"><span class="dot" style="background:${color}"></span>${cat}</div>`).join("");
-
-    // Escape text so article content can't inject HTML into popups
-    function esc(s) {
-      const d = document.createElement("div");
-      d.textContent = String(s ?? "");
-      return d.innerHTML;
-    }
-
-    // Shows a status message; loading=true adds a spinning circle in front
-    function showStatus(el, msg, { isError = false, loading = false } = {}) {
-      el.innerHTML = msg ? (loading ? '<span class="spinner"></span>' : "") + esc(msg) : "";
-      el.className = "status" + (isError ? " error" : "");
-    }
-
-    function setStatus(msg, isError = false, loading = false) {
-      showStatus(document.getElementById("status"), msg, { isError, loading });
-    }
-
-    function addPin(inc) {
-      const color = COLORS[inc.category] || COLORS.other;
-      L.circleMarker([inc.lat, inc.lng], {
-        radius: 9, color: "#fff", weight: 2, fillColor: color, fillOpacity: 0.9
-      }).bindPopup(
-        `<b>${esc(inc.category)}</b><br>${esc(inc.summary)}<br><br>` +
-        `<b>Where:</b> ${esc(inc.location_text)}<br>` +
-        `<b>When:</b> ${esc(inc.date)}, ${esc(inc.time_of_day)}`
-      ).addTo(pins);
-    }
-
-    document.getElementById("submit").onclick = async () => {
-      const text = document.getElementById("article").value.trim();
-      if (!text) return setStatus("Please paste an article first.", true);
-      const btn = document.getElementById("submit");
-      btn.disabled = true;
-      setStatus("Claude is reading the article... (this can take a little while)", false, true);
-      try {
-        const res = await fetch("/api/extract", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-        const data = await res.json();
-        if (!res.ok) return setStatus(data.error || "Something went wrong.", true);
-        data.incidents.forEach(addPin);
-        incidents.push(...data.incidents);
-        recomputeZones();
-        setStatus(`Found ${data.incidents.length} incident(s).`);
-      } catch (e) {
-        setStatus("Could not reach the server. Is app.py running?", true);
-      } finally {
-        btn.disabled = false;
-      }
-    };
-
-    // Puts all sample articles into the text box; then click "Extract incidents"
-    document.getElementById("samples").onclick = async () => {
-      const res = await fetch("/api/samples");
-      const samples = await res.json();
-      document.getElementById("article").value = samples
-        .map(s => `--- ${s.headline} ---\n${s.body}`).join("\n\n");
-      setStatus(`Loaded ${samples.length} sample articles. Click "Extract incidents".`);
-    };
-
-    // ---------- Plan my walk ----------
-    const routeLayer = L.layerGroup().addTo(map);
-    let walkMode = false, startPt = null, endPt = null;
-    const walkBtn = document.getElementById("walkBtn");
     const walkStatus = document.getElementById("walkStatus");
     const routeInfo = document.getElementById("routeInfo");
     const adviceBox = document.getElementById("advice");
+    const planBtn = document.getElementById("planBtn");
+    const tapHint = document.getElementById("tapHint");
+    const sheet = document.getElementById("sheet");
+
+    // Load saved incidents + zones as soon as the page opens, then fit them
+    // (and the start point) into the part of the map above the bottom sheet
+    sm.loadSaved().then(() => {
+      const pts = sm.incidents.map(i => [i.lat, i.lng]).concat(start ? [start.pt] : []);
+      if (!pts.length) return;
+      map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [20, 110], paddingBottomRight: [20, sheet.offsetHeight + 10] });
+    }).catch(() => showStatus(walkStatus, "Couldn't load incidents. Is app.py running?", { isError: true }));
+
+    // ----- Legend -----
+    document.getElementById("pinLegend").innerHTML = pinLegendHTML();
+    document.getElementById("legendBtn").onclick = () => {
+      const card = document.getElementById("legendCard");
+      card.hidden = !card.hidden;
+    };
+    document.getElementById("zonesToggle").onchange = (e) => sm.setZonesVisible(e.target.checked);
+
+    // ----- From / To -----
+    const routeLayer = L.layerGroup().addTo(map);
+    const markerLayer = L.layerGroup().addTo(map);
+    let start = { ...START_DEFAULT }, dest = null;   // each is { name, pt: [lat, lng] } or null
+    let tapTarget = "to";                            // which box a map tap fills
+
+    const fields = {
+      from: { input: document.getElementById("fromInput"), list: document.getElementById("fromSuggest") },
+      to:   { input: document.getElementById("toInput"),   list: document.getElementById("toSuggest") },
+    };
+    fields.from.input.classList.add("set");
+
+    function drawMarkers() {
+      markerLayer.clearLayers();
+      if (start) L.marker(start.pt).bindTooltip("Start", { permanent: true, direction: "top", offset: [-15, -12] }).addTo(markerLayer);
+      if (dest) L.marker(dest.pt).bindTooltip("End", { permanent: true, direction: "top", offset: [-15, -12] }).addTo(markerLayer);
+    }
 
     function clearRoute() {
       routeLayer.clearLayers();
-      startPt = endPt = null;
       routeInfo.innerHTML = "";
       adviceBox.hidden = true;
       showStatus(walkStatus, "");
     }
 
-    // Reads the "When are you walking?" picker, e.g. "22:00" -> "night (10:00 PM)"
-    function walkTimeOfDay() {
-      const [h, m] = (document.getElementById("walkTime").value || "22:00").split(":").map(Number);
-      const part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
-      const label = `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
-      return `${part} (${label})`;
+    function refresh() {
+      planBtn.disabled = !(start && dest);
+      document.querySelectorAll("#destChips button")
+        .forEach(b => b.classList.toggle("selected", !!dest && b.dataset.name === dest.name));
+      fields.from.input.classList.toggle("set", !!start);
+      fields.to.input.classList.toggle("set", !!dest);
+      clearRoute();
+      drawMarkers();
     }
 
-    walkBtn.onclick = () => {
-      clearRoute();
-      walkMode = true;
-      walkBtn.classList.add("active");
-      showStatus(walkStatus, "Click your START point on the map.");
-    };
-    document.getElementById("walkClear").onclick = () => {
-      clearRoute();
-      walkMode = false;
-      walkBtn.classList.remove("active");
-    };
+    function setTapTarget(which) {
+      tapTarget = which;
+      document.getElementById("tapTarget").textContent = which === "from" ? "From" : "To";
+    }
 
-    map.on("click", async (e) => {
-      if (!walkMode) return;
-      const pt = [e.latlng.lat, e.latlng.lng];
-      if (!startPt) {
-        startPt = pt;
-        L.marker(pt).bindTooltip("Start", { permanent: true }).addTo(routeLayer);
-        showStatus(walkStatus, "Now click your END point.");
-        return;
+    // Sets the From or To point (place = { name, pt }) and shows its name in the box
+    function setPoint(which, place) {
+      if (which === "from") start = place; else dest = place;
+      fields[which].input.value = place.name;
+      hideSuggestions(which);
+      if (which === "from") setTapTarget("to");  // next map tap fills To
+      refresh();
+    }
+
+    function hideSuggestions(which) {
+      fields[which].list.hidden = true;
+      fields[which].list.innerHTML = "";
+    }
+
+    function suggestionMessage(which, html) {
+      fields[which].list.innerHTML = `<div class="msg">${html}</div>`;
+      fields[which].list.hidden = false;
+    }
+
+    // "San Pedro Square, San Jose, CA, USA" -> "San Pedro Square, San Jose"
+    const shortLabel = (label) => label.replace(/, CA, USA$/, "").replace(/, USA$/, "");
+
+    // Live search: wait 300 ms after typing stops; ignore answers to older searches
+    let searchTimer = null, searchSeq = 0;
+
+    async function runSearch(which, q) {
+      const seq = ++searchSeq;
+      suggestionMessage(which, '<span class="spinner"></span>Searching...');
+      try {
+        const res = await fetch("/api/geocode?q=" + encodeURIComponent(q));
+        const data = await res.json();
+        if (seq !== searchSeq) return;  // a newer search has started
+        if (!res.ok) return suggestionMessage(which, esc(data.error || "Search failed. Please try again."));
+        if (!data.results.length) return suggestionMessage(which, "Try a nearby landmark or street name.");
+        const list = fields[which].list;
+        list.innerHTML = "";
+        data.results.forEach(r => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = shortLabel(r.label);
+          b.onclick = () => setPoint(which, { name: shortLabel(r.label), pt: [r.lat, r.lng] });
+          list.appendChild(b);
+        });
+        list.hidden = false;
+      } catch (err) {
+        if (seq === searchSeq) suggestionMessage(which, "Could not reach the server. Is app.py running?");
       }
-      endPt = pt;
-      L.marker(pt).bindTooltip("End", { permanent: true }).addTo(routeLayer);
-      walkMode = false;
-      walkBtn.classList.remove("active");
-      showStatus(walkStatus, "Finding routes and asking the safety advisor...", { loading: true });
+    }
 
+    for (const which of ["from", "to"]) {
+      const { input, list } = fields[which];
+      input.addEventListener("focus", () => { setTapTarget(which); input.select(); });
+      input.addEventListener("input", () => {
+        // Typing means the old point no longer matches the text
+        if (which === "from") start = null; else dest = null;
+        refresh();
+        clearTimeout(searchTimer);
+        const q = input.value.trim();
+        if (q.length < 2) return hideSuggestions(which);
+        searchTimer = setTimeout(() => runSearch(which, q), 300);
+      });
+      // Enter picks the first suggestion
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); list.querySelector("button")?.click(); }
+        if (e.key === "Escape") hideSuggestions(which);
+      });
+    }
+
+    // Close suggestion lists when tapping anywhere outside the search boxes
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".search")) { hideSuggestions("from"); hideSuggestions("to"); }
+    });
+
+    // Use my location (browsers allow this on localhost; they'll ask permission)
+    const myLocBtn = document.getElementById("myLocation");
+    myLocBtn.onclick = () => {
+      if (!navigator.geolocation) return showStatus(walkStatus, "This browser can't share your location. Search for a place instead.", { isError: true });
+      myLocBtn.disabled = true;
+      showStatus(walkStatus, "Finding your location...", { loading: true });
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          myLocBtn.disabled = false;
+          setPoint("from", { name: "My location", pt: [pos.coords.latitude, pos.coords.longitude] });
+          map.panTo(start.pt);
+        },
+        (err) => {
+          myLocBtn.disabled = false;
+          showStatus(walkStatus, err.code === 1
+            ? "Location permission was denied. Search for a place instead."
+            : "Couldn't find your location. Search for a place instead.", { isError: true });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    };
+
+    // Swap From and To
+    document.getElementById("swapBtn").onclick = () => {
+      const fromText = fields.from.input.value, toText = fields.to.input.value;
+      [start, dest] = [dest, start];
+      fields.from.input.value = toText;
+      fields.to.input.value = fromText;
+      hideSuggestions("from"); hideSuggestions("to");
+      refresh();
+    };
+
+    // Quick-pick chips fill the To box
+    const chips = document.getElementById("destChips");
+    DESTINATIONS.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = d.name;
+      b.dataset.name = d.name;
+      b.onclick = () => setPoint("to", d);
+      chips.appendChild(b);
+    });
+
+    // Backup: tap the map to drop a point in the From or To box
+    map.on("click", (e) => {
+      setPoint(tapTarget, { name: "Dropped pin on map", pt: [e.latlng.lat, e.latlng.lng] });
+    });
+
+    drawMarkers();
+
+    // ----- When? toggle: "Leave now" (current time) or "Pick a time" -----
+    let leaveNow = true;
+    const timeInput = document.getElementById("walkTime");
+    function setWhen(now) {
+      leaveNow = now;
+      document.getElementById("leaveNow").classList.toggle("on", now);
+      document.getElementById("pickTime").classList.toggle("on", !now);
+      document.getElementById("leaveNow").setAttribute("aria-checked", now);
+      document.getElementById("pickTime").setAttribute("aria-checked", !now);
+      timeInput.hidden = now;
+    }
+    document.getElementById("leaveNow").onclick = () => setWhen(true);
+    document.getElementById("pickTime").onclick = () => setWhen(false);
+
+    // The time sent to Claude, e.g. "leaving now: night (10:15 PM)" or "night (10:00 PM)"
+    function walkTimeOfDay() {
+      let h, m;
+      if (leaveNow) {
+        const now = new Date();
+        h = now.getHours(); m = now.getMinutes();
+      } else {
+        [h, m] = (timeInput.value || "22:00").split(":").map(Number);
+      }
+      const part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
+      const label = `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+      return `${leaveNow ? "leaving now: " : ""}${part} (${label})`;
+    }
+
+    // ----- Plan my walk -----
+    planBtn.onclick = async () => {
+      if (!start || !dest) return;
+      clearRoute();
+      planBtn.disabled = true;
+      showStatus(walkStatus, "Finding routes and asking the safety advisor...", { loading: true });
       try {
         const res = await fetch("/api/route", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            start: startPt, end: endPt, incidents,
-            red_squares: redSquares, time_of_day: walkTimeOfDay()
+            start: start.pt, end: dest.pt, incidents: sm.incidents,
+            red_squares: sm.getRedSquares(), time_of_day: walkTimeOfDay()
           })
         });
         const data = await res.json();
-        if (!res.ok) { showStatus(walkStatus, ""); routeInfo.innerHTML = `<span class="error">${esc(data.error)}</span>`; return; }
+        if (!res.ok) return showStatus(walkStatus, data.error || "Something went wrong.", { isError: true });
 
-        const normalLine = L.polyline(data.normal.coords, { color: "#7f8c8d", weight: 6, opacity: 0.8 }).addTo(routeLayer);
-        let html = `<div>Normal route (gray): <b>${data.normal.minutes} min</b></div>`;
+        const normalLine = L.polyline(data.normal.coords, { color: ROUTE_COLORS.normal, weight: 7, opacity: 0.8 }).addTo(routeLayer);
+        let html = `<div><span class="line" style="background:${ROUTE_COLORS.normal}"></span>Normal route: <b>&nbsp;${data.normal.minutes} min</b></div>`;
         let bounds = normalLine.getBounds();
         if (data.safer) {
-          const saferLine = L.polyline(data.safer.coords, { color: "#27ae60", weight: 5, opacity: 0.9 }).addTo(routeLayer);
+          const saferLine = L.polyline(data.safer.coords, { color: ROUTE_COLORS.safer, weight: 6, opacity: 0.9 }).addTo(routeLayer);
           bounds = bounds.extend(saferLine.getBounds());
-          html += `<div>Safer route (green): <b>${data.safer.minutes} min</b></div>`;
+          html += `<div><span class="line" style="background:${ROUTE_COLORS.safer}"></span>Safer route: <b>&nbsp;${data.safer.minutes} min</b></div>`;
         } else {
           html += `<div><i>Showing one route only. ${esc(data.note)}</i></div>`;
         }
         routeInfo.innerHTML = html;
-        map.fitBounds(bounds, { padding: [40, 40] });
+        // Keep the routes visible above the bottom sheet
+        map.fitBounds(bounds, { paddingTopLeft: [30, 110], paddingBottomRight: [30, sheet.offsetHeight + 20] });
         showStatus(walkStatus, "");
-        adviceBox.textContent = data.advice;
+        adviceBox.innerHTML = '<div class="advice-title">Safety advisor</div>' + esc(data.advice);
         adviceBox.hidden = false;
       } catch (err) {
-        showStatus(walkStatus, "");
-        routeInfo.innerHTML = `<span class="error">Could not reach the server. Is app.py running?</span>`;
+        showStatus(walkStatus, "Could not reach the server. Is app.py running?", { isError: true });
+      } finally {
+        planBtn.disabled = !(start && dest);
       }
-    });
-
-    document.getElementById("clear").onclick = () => {
-      pins.clearLayers();
-      incidents.length = 0;
-      recomputeZones();
-      setStatus("");
     };
   </script>
 </body>

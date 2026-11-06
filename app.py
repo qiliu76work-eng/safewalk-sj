@@ -1,9 +1,11 @@
 """SafeWalk SJ - paste a news article, see safety incidents on a map."""
 
+import hashlib
 import json
 import math
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -101,9 +103,54 @@ def extract_incidents(article_text):
     raise ValueError("Claude did not return any incidents. Please try again.")
 
 
+# ---------------- Saved incidents (data/incidents.json) ----------------
+
+DATA_DIR = Path(__file__).parent / "data"
+INCIDENTS_PATH = DATA_DIR / "incidents.json"
+
+
+def load_saved_incidents():
+    if not INCIDENTS_PATH.exists():
+        return []
+    return json.loads(INCIDENTS_PATH.read_text(encoding="utf-8"))
+
+
+def article_id(text):
+    """Same article text (ignoring spacing/line breaks) -> same id."""
+    return hashlib.sha256(" ".join(text.split()).encode("utf-8")).hexdigest()[:12]
+
+
+def save_incidents(text, incidents):
+    """Save incidents from one article. Re-extracting the same article replaces
+    its old incidents instead of adding duplicates. Returns the new total."""
+    source = article_id(text)
+    saved = [inc for inc in load_saved_incidents() if inc.get("source") != source]
+    saved += [{**inc, "source": source} for inc in incidents]
+    tmp = INCIDENTS_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(saved, indent=2), encoding="utf-8")
+    tmp.replace(INCIDENTS_PATH)  # write-then-rename so the file is never half-written
+    return len(saved)
+
+
+def samples_as_text():
+    """All sample articles as one text, in the same format the feed page's Load samples uses."""
+    samples = json.loads((DATA_DIR / "sample_articles.json").read_text(encoding="utf-8"))
+    return "\n\n".join(f"--- {s['headline']} ---\n{s['body']}" for s in samples)
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/feed")
+def feed():
+    return render_template("feed.html")
+
+
+@app.route("/api/incidents")
+def api_incidents():
+    return jsonify(incidents=load_saved_incidents())
 
 
 @app.route("/api/extract", methods=["POST"])
@@ -113,6 +160,7 @@ def api_extract():
         return jsonify(error="Please paste an article first."), 400
     try:
         incidents = extract_incidents(text)
+        total = save_incidents(text, incidents)
     except anthropic.AuthenticationError:
         return jsonify(error="Invalid or missing API key. Check your .env file."), 401
     except anthropic.RateLimitError:
@@ -123,7 +171,7 @@ def api_extract():
         return jsonify(error=f"Claude API error ({e.status_code}): {e.message}"), 502
     except ValueError as e:
         return jsonify(error=str(e)), 502
-    return jsonify(incidents=incidents)
+    return jsonify(incidents=incidents, total_saved=total)
 
 
 # ---------------- Plan my walk ----------------
@@ -167,6 +215,47 @@ def get_ors_route(start, end, avoid_polygons=None):
         "minutes": round(feature["properties"]["summary"]["duration"] / 60),
         "meters": round(feature["properties"]["summary"]["distance"]),
     }
+
+
+ORS_AUTOCOMPLETE_URL = "https://api.openrouteservice.org/geocode/autocomplete"
+SAN_JOSE_AREA = {  # focus on SJSU, only search inside this box
+    "focus.point.lat": 37.3352, "focus.point.lon": -121.8811,
+    "boundary.rect.min_lat": 37.28, "boundary.rect.max_lat": 37.40,
+    "boundary.rect.min_lon": -121.97, "boundary.rect.max_lon": -121.80,
+}
+
+
+def geocode_autocomplete(text):
+    """Place suggestions for a search box. Returns up to 5 {label, lat, lng}."""
+    key = os.getenv("ORS_API_KEY")
+    if not key:
+        raise ValueError("ORS_API_KEY is missing from your .env file.")
+    params = urllib.parse.urlencode({"api_key": key, "text": text, "size": 5, **SAN_JOSE_AREA})
+    try:
+        with urllib.request.urlopen(f"{ORS_AUTOCOMPLETE_URL}?{params}", timeout=10) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            raise ValueError("OpenRouteService rejected the ORS_API_KEY. Check your .env file.")
+        raise ValueError(f"Search error ({e.code}). Please try again.")
+    except urllib.error.URLError:
+        raise ValueError("Could not reach the search service. Check your internet.")
+    return [
+        {"label": f["properties"].get("label") or f["properties"].get("name", "Unknown place"),
+         "lat": f["geometry"]["coordinates"][1], "lng": f["geometry"]["coordinates"][0]}
+        for f in data.get("features", [])[:5]
+    ]
+
+
+@app.route("/api/geocode")
+def api_geocode():
+    text = request.args.get("q", "").strip()
+    if len(text) < 2:
+        return jsonify(results=[])
+    try:
+        return jsonify(results=geocode_autocomplete(text))
+    except ValueError as e:
+        return jsonify(error=str(e)), 502
 
 
 def distance_to_route_m(point, coords):
@@ -230,6 +319,12 @@ def api_route():
         normal = get_ors_route(start, end)
     except ValueError as e:
         return jsonify(error=str(e)), 502
+
+    # A route can't avoid a zone it starts or ends in, so skip those squares
+    def contains(ring, pt):
+        lngs, lats = [p[0] for p in ring], [p[1] for p in ring]
+        return min(lats) <= pt[0] <= max(lats) and min(lngs) <= pt[1] <= max(lngs)
+    red_squares = [sq for sq in red_squares if not contains(sq, start) and not contains(sq, end)]
 
     safer, note = None, None
     if not red_squares:
