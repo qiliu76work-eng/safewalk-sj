@@ -18,6 +18,10 @@
     .legend div { font-size: 13px; margin: 3px 0; }
     .legend span.sq { border-radius: 2px; opacity: 0.6; }
     .zones-legend p { font-size: 13px; margin: 8px 0 4px; }
+    .walk-status, #routeInfo { font-size: 14px; margin-top: 8px; }
+    #routeInfo .line { display: inline-block; width: 18px; height: 4px; vertical-align: middle; margin-right: 6px; }
+    .advice { margin-top: 10px; padding: 10px; background: #eef7f0; border-left: 4px solid #27ae60; font-size: 14px; line-height: 1.4; }
+    #walkBtn.active { background: #27ae60; color: #fff; }
   </style>
 </head>
 <body>
@@ -29,6 +33,14 @@
     <button id="samples">Load samples</button>
     <button id="clear">Clear map</button>
     <div id="status"></div>
+    <h3>Plan my walk</h3>
+    <label>When are you walking? <input type="time" id="walkTime" value="22:00"></label><br>
+    <button id="walkBtn">Plan my walk</button>
+    <button id="walkClear">Clear route</button>
+    <div id="walkStatus" class="walk-status"></div>
+    <div id="routeInfo"></div>
+    <div id="advice" class="advice" hidden></div>
+
     <h3>Legend</h3>
     <div class="legend" id="legend"></div>
     <h3>Safety zones</h3>
@@ -43,7 +55,8 @@
   <div id="map"></div>
 
   <script>
-    const COLORS = { harassment: "#f39c12", assault: "#e74c3c", theft: "#3498db", stalking: "#8e44ad", other: "#7f8c8d" };
+    // Pin colors avoid red/yellow/green, which are reserved for safety-zone levels
+    const COLORS = { harassment: "#e84393", assault: "#6c3483", theft: "#2471a3", stalking: "#138d90", other: "#4d4d4d" };
 
     const map = L.map("map").setView([37.3352, -121.8811], 15);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -69,8 +82,11 @@
       return [Math.floor((lat - GRID.south) / CELL_LAT), Math.floor((lng - GRID.west) / CELL_LNG)];
     }
 
+    let redSquares = [];  // red squares as GeoJSON rings ([lng, lat] corners), for route avoidance
+
     function recomputeZones() {
       zones.clearLayers();
+      redSquares = [];
       const counts = new Map();  // "row,col" -> number of incidents
       for (const inc of incidents) {
         const cell = cellOf(inc.lat, inc.lng);
@@ -94,6 +110,10 @@
         const n = counts.get(key) || 0;
         const color = n === 0 ? ZONE_COLORS.none : n <= 2 ? ZONE_COLORS.some : ZONE_COLORS.many;
         const s = GRID.south + r * CELL_LAT, w = GRID.west + c * CELL_LNG;
+        if (n >= 3) {
+          const nn = s + CELL_LAT, e = w + CELL_LNG;
+          redSquares.push([[w, s], [e, s], [e, nn], [w, nn], [w, s]]);
+        }
         L.rectangle([[s, w], [s + CELL_LAT, w + CELL_LNG]], {
           pane: "zones", interactive: false,
           color, weight: 1, opacity: 0.4, fillColor: color, fillOpacity: 0.25
@@ -165,6 +185,90 @@
         .map(s => `--- ${s.headline} ---\n${s.body}`).join("\n\n");
       setStatus(`Loaded ${samples.length} sample articles. Click "Extract incidents".`);
     };
+
+    // ---------- Plan my walk ----------
+    const routeLayer = L.layerGroup().addTo(map);
+    let walkMode = false, startPt = null, endPt = null;
+    const walkBtn = document.getElementById("walkBtn");
+    const walkStatus = document.getElementById("walkStatus");
+    const routeInfo = document.getElementById("routeInfo");
+    const adviceBox = document.getElementById("advice");
+
+    function clearRoute() {
+      routeLayer.clearLayers();
+      startPt = endPt = null;
+      routeInfo.innerHTML = "";
+      adviceBox.hidden = true;
+      walkStatus.textContent = "";
+    }
+
+    // Reads the "When are you walking?" picker, e.g. "22:00" -> "night (10:00 PM)"
+    function walkTimeOfDay() {
+      const [h, m] = (document.getElementById("walkTime").value || "22:00").split(":").map(Number);
+      const part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
+      const label = `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+      return `${part} (${label})`;
+    }
+
+    walkBtn.onclick = () => {
+      clearRoute();
+      walkMode = true;
+      walkBtn.classList.add("active");
+      walkStatus.textContent = "Click your START point on the map.";
+    };
+    document.getElementById("walkClear").onclick = () => {
+      clearRoute();
+      walkMode = false;
+      walkBtn.classList.remove("active");
+    };
+
+    map.on("click", async (e) => {
+      if (!walkMode) return;
+      const pt = [e.latlng.lat, e.latlng.lng];
+      if (!startPt) {
+        startPt = pt;
+        L.marker(pt).bindTooltip("Start", { permanent: true }).addTo(routeLayer);
+        walkStatus.textContent = "Now click your END point.";
+        return;
+      }
+      endPt = pt;
+      L.marker(pt).bindTooltip("End", { permanent: true }).addTo(routeLayer);
+      walkMode = false;
+      walkBtn.classList.remove("active");
+      walkStatus.textContent = "Finding routes and asking the safety advisor...";
+
+      try {
+        const res = await fetch("/api/route", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            start: startPt, end: endPt, incidents,
+            red_squares: redSquares, time_of_day: walkTimeOfDay()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { walkStatus.textContent = ""; routeInfo.innerHTML = `<span class="error">${esc(data.error)}</span>`; return; }
+
+        const normalLine = L.polyline(data.normal.coords, { color: "#7f8c8d", weight: 6, opacity: 0.8 }).addTo(routeLayer);
+        let html = `<div><span class="line" style="background:#7f8c8d"></span>Normal route: <b>${data.normal.minutes} min</b></div>`;
+        let bounds = normalLine.getBounds();
+        if (data.safer) {
+          const saferLine = L.polyline(data.safer.coords, { color: "#27ae60", weight: 5, opacity: 0.9 }).addTo(routeLayer);
+          bounds = bounds.extend(saferLine.getBounds());
+          html += `<div><span class="line" style="background:#27ae60"></span>Safer route: <b>${data.safer.minutes} min</b></div>`;
+        } else {
+          html += `<div><i>Showing one route only. ${esc(data.note)}</i></div>`;
+        }
+        routeInfo.innerHTML = html;
+        map.fitBounds(bounds, { padding: [40, 40] });
+        walkStatus.textContent = "";
+        adviceBox.textContent = data.advice;
+        adviceBox.hidden = false;
+      } catch (err) {
+        walkStatus.textContent = "";
+        routeInfo.innerHTML = `<span class="error">Could not reach the server. Is app.py running?</span>`;
+      }
+    });
 
     document.getElementById("clear").onclick = () => {
       pins.clearLayers();
